@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #F2EFE9;
+  --color-surface-dim: #d3dec6;
+  --color-surface-bright: #f3fde5;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #edf7df;
+  --color-surface-container: #e7f2da;
+  --color-surface-container-high: #e1ecd4;
+  --color-surface-container-highest: #dce6cf;
+  --color-on-surface: #161e10;
+  --color-on-surface-variant: #44483f;
+  --color-inverse-surface: #2a3323;
+  --color-inverse-on-surface: #eaf4dc;
+  --color-outline: #74786e;
+  --color-outline-variant: #c4c8bc;
+  --color-surface-tint: #4f6541;
+  --color-primary: #3e5331;
+  --color-on-primary: #F2EFE9;
+  --color-primary-container: #556b47;
+  --color-on-primary-container: #d1ebbe;
+  --color-inverse-primary: #b5cea3;
+  --color-secondary: #566247;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #d7e5c2;
+  --color-on-secondary-container: #5a674b;
+  --color-tertiary: #544b3c;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #6d6353;
+  --color-on-tertiary-container: #eee0cb;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-primary-fixed: #d1eabd;
+  --color-primary-fixed-dim: #b5cea3;
+  --color-on-primary-fixed: #0d2005;
+  --color-on-primary-fixed-variant: #384c2b;
+  --color-secondary-fixed: #dae7c5;
+  --color-secondary-fixed-dim: #becbaa;
+  --color-on-secondary-fixed: #141f09;
+  --color-on-secondary-fixed-variant: #3f4a31;
+  --color-tertiary-fixed: #efe1cc;
+  --color-tertiary-fixed-dim: #d2c5b1;
+  --color-on-tertiary-fixed: #211b0e;
+  --color-on-tertiary-fixed-variant: #4e4636;
+  --color-background: #F2EFE9;
+  --color-on-background: #2C3525;
+  --color-surface-variant: #dce6cf;
+  --color-accent-sand: #D1C4B0;
+
+  --font-serif: "Noto Serif", serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  text-transform: uppercase;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
