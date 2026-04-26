@@ -300,12 +300,12 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
             <motion.div
               className="absolute pointer-events-none"
               style={{
-                top: '33%',
+                top: '36%',
                 left: '50%',
                 x: '-50%',
                 rotate: '-1.5deg',
-                width: 'min(62vw, 260px)',
-                height: '25vh',
+                width: 'min(65vw, 260px)',
+                height: '26vh',
               }}
               initial={{ opacity: 0, y: '0%' }}
               animate={{ opacity: 1 }}
@@ -314,22 +314,22 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
               <motion.div className="w-full h-full relative" animate={cardControls}>
                 {/* Card text */}
                 <div
-                  className="absolute inset-0 flex flex-col items-center justify-center px-2 text-center"
+                  className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center"
                   style={{
                     color: '#2C3525',
                     fontFamily: '"Noto Serif", serif'
                   }}
                 >
-                  <p className="text-[10px] sm:text-[11px] leading-snug mb-1 opacity-90">
+                  <p className="text-[8px] sm:text-[9px] leading-snug mb-1 opacity-90 max-w-[85%] mx-auto">
                     Con nuestro amor, la bendición de Dios y la de nuestros padres
                   </p>
-                  <p className="text-[11px] sm:text-[12px] mb-1">
+                  <p className="text-[9px] sm:text-[10px] mb-1">
                     Nosotros
                   </p>
-                  <h2 className="text-xl sm:text-2xl font-bold my-1 uppercase tracking-widest">
+                  <h2 className="text-base sm:text-lg font-bold my-1 uppercase tracking-widest">
                     Ana M. & Harold
                   </h2>
-                  <p className="text-[10px] sm:text-[11px] leading-snug mt-1 opacity-90">
+                  <p className="text-[8px] sm:text-[9px] leading-snug mt-1 opacity-90 max-w-[85%] mx-auto">
                     tenemos el honor de invitarte<br />
                     a nuestro matrimonio.
                   </p>
