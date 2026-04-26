@@ -197,18 +197,10 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
     <motion.div
       className="fixed inset-0 overflow-hidden bg-black"
       initial={{ scale: 1 }}
-      animate={{ scale: isZoomed ? 1.7 : 1 }}
+      animate={{ scale: isZoomed ? 1.8 : 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
     >
-      {/* Dark overlay when zoomed */}
-      <motion.div
-        className="absolute inset-0 bg-black/60 pointer-events-none"
-        style={{ zIndex: 1 }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isZoomed ? 1 : 0 }}
-        transition={{ duration: 0.4 }}
-      />
 
       {/* ═══════════════════════════════════════════
           THE VIDEO — always visible, is the entire scene
@@ -371,9 +363,9 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
             >
               {/* Pulse ring */}
               <motion.div
-                className="absolute inset-[0%] rounded-full border border-[#C49550]/40"
-                animate={{ scale: [1, 1.25, 1.25], opacity: [0.6, 0, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeOut' }}
+                className="absolute inset-[-10%] rounded-full border-[3px] border-white/80 shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                animate={{ scale: [1, 1.35, 1.35], opacity: [1, 0, 0] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
               />
             </motion.div>
           )}
@@ -381,7 +373,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
           {/* Hint text */}
           {phase === 'sealed' && videoReady && (
             <motion.p
-              className="absolute left-0 right-0 text-center text-[10px] text-white/60 font-sans tracking-[0.2em] uppercase"
+              className="absolute left-0 right-0 text-center text-[12px] md:text-[14px] text-white/90 font-sans tracking-[0.2em] uppercase font-bold"
               style={{ bottom: '10%' }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

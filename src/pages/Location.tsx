@@ -50,9 +50,9 @@ export default function Location() {
               <Church className="text-primary" size={20} strokeWidth={1.5} />
             </div>
             <div className="bg-white rounded-xl p-6 border border-[#D1C4B0]/40 w-full shadow-sm hover:bg-[#e7f2da]/30 transition-colors duration-300">
-              <div className="flex justify-between items-baseline mb-2">
+              <div className="flex justify-between items-start sm:items-baseline gap-4 mb-2">
                 <h3 className="text-xl font-serif text-[#2C3525]">Ceremonia Religiosa</h3>
-                <span className="text-sm font-semibold text-[#566247]">16:00 hrs</span>
+                <span className="text-sm font-semibold text-[#566247] flex-shrink-0 mt-1 sm:mt-0">16:00 hrs</span>
               </div>
               <p className="text-[#44483f] mb-3">Parroquia de San Miguel Arcángel. Solicitamos puntualidad para dar inicio a la celebración.</p>
               <a href="https://maps.app.goo.gl/gHeK8PrupLjzwroq5" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary text-sm font-semibold hover:opacity-80 transition-opacity">
@@ -68,9 +68,9 @@ export default function Location() {
               <Wine className="text-primary" size={20} strokeWidth={1.5} />
             </div>
             <div className="bg-white rounded-xl p-6 border border-[#D1C4B0]/40 w-full shadow-sm hover:bg-[#e7f2da]/30 transition-colors duration-300">
-              <div className="flex justify-between items-baseline mb-2">
+              <div className="flex justify-between items-start sm:items-baseline gap-4 mb-2">
                 <h3 className="text-xl font-serif text-[#2C3525]">Cóctel de Bienvenida</h3>
-                <span className="text-sm font-semibold text-[#566247]">17:30 hrs</span>
+                <span className="text-sm font-semibold text-[#566247] flex-shrink-0 mt-1 sm:mt-0">17:30 hrs</span>
               </div>
               <p className="text-[#44483f]">Jardín Principal de la Hacienda. Disfruta de bebidas frescas y bocadillos mientras llegan los novios.</p>
             </div>
@@ -82,9 +82,9 @@ export default function Location() {
               <Utensils className="text-primary" size={20} strokeWidth={1.5} />
             </div>
             <div className="bg-white rounded-xl p-6 border border-[#D1C4B0]/40 w-full shadow-sm hover:bg-[#e7f2da]/30 transition-colors duration-300">
-              <div className="flex justify-between items-baseline mb-2">
+              <div className="flex justify-between items-start sm:items-baseline gap-4 mb-2">
                 <h3 className="text-xl font-serif text-[#2C3525]">Banquete</h3>
-                <span className="text-sm font-semibold text-[#566247]">19:00 hrs</span>
+                <span className="text-sm font-semibold text-[#566247] flex-shrink-0 mt-1 sm:mt-0">19:00 hrs</span>
               </div>
               <p className="text-[#44483f]">Cena de tres tiempos servida en el Salón Terraza. Favor de ubicar su mesa en el seating plan.</p>
             </div>
@@ -96,9 +96,9 @@ export default function Location() {
               <PartyPopper className="text-primary" size={20} strokeWidth={1.5} />
             </div>
             <div className="bg-white rounded-xl p-6 border border-[#D1C4B0]/40 w-full shadow-sm hover:bg-[#e7f2da]/30 transition-colors duration-300">
-              <div className="flex justify-between items-baseline mb-2">
+              <div className="flex justify-between items-start sm:items-baseline gap-4 mb-2">
                 <h3 className="text-xl font-serif text-[#2C3525]">Fiesta</h3>
-                <span className="text-sm font-semibold text-[#566247]">21:00 hrs</span>
+                <span className="text-sm font-semibold text-[#566247] flex-shrink-0 mt-1 sm:mt-0">21:00 hrs</span>
               </div>
               <p className="text-[#44483f]">¡A celebrar! Música en vivo, baile y barra libre hasta el amanecer.</p>
             </div>

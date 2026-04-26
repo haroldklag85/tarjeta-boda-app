@@ -23,8 +23,8 @@ export default function Info() {
       animate="show"
     >
       {/* Header Section */}
-      <motion.section className="text-center mb-12 mt-4" variants={itemVariants}>
-        <h2 className="text-[2.25rem] font-serif text-primary mb-6 uppercase tracking-wider">
+      <motion.section className="text-center mb-12 mt-4 px-2" variants={itemVariants}>
+        <h2 className="text-[1.75rem] sm:text-[2.25rem] font-serif text-primary mb-6 uppercase tracking-wider break-words">
           Recomendaciones
         </h2>
         <p className="text-[1rem] text-[#44483f] max-w-md mx-auto italic">
@@ -43,7 +43,7 @@ export default function Info() {
             </div>
             <div className="bg-white rounded-xl p-6 shadow-[0_4px_20px_rgba(44,53,37,0.05)] w-full border border-[#D1C4B0]/20">
               <h3 className="text-[1.25rem] font-serif text-[#2C3525] mb-4">Código de Vestimenta</h3>
-              
+
               <div className="flex flex-col gap-4 text-left text-[0.95rem] text-[#44483f]">
                 <p>
                   <span className="font-serif italic text-primary font-bold">Elegancia cálida</span>, nuestra boda será en Rivera, Huila, en un ambiente natural, cálido y muy alegre. Les sugerimos asistir con un estilo formal tropical: elegante, fresco y cómodo para disfrutar la tarde y la noche.
@@ -120,7 +120,7 @@ export default function Info() {
             <div className="bg-white rounded-xl p-6 shadow-[0_4px_20px_rgba(44,53,37,0.05)] w-full border border-[#D1C4B0]/20">
               <h3 className="text-[1.25rem] font-serif text-[#2C3525] mb-2">Australian Bar</h3>
               <p className="text-[1rem] text-[#44483f]">
-                Durante el evento tendremos bebidas disponibles y, adicionalmente, contaremos con un bar estilo australiano para quienes deseen consumos extra.
+                Inspirados en la tradición de las bodas australianas, queremos brindar y celebrar con ustedes. Cada mesa contará con dos botellas de cortesía para iniciar la fiesta. Luego, quienes deseen seguir disfrutando de otras bebidas, podrán encontrarlas en nuestra barra disponible para compra durante toda la celebración.
               </p>
             </div>
           </div>
