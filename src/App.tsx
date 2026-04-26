@@ -1,20 +1,52 @@
-import React from 'react'
+import { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import LayeredEnvelope from './components/LayeredEnvelope';
+import Preloader from './components/Preloader';
+import MainLayout from './layouts/MainLayout';
+import Invitation from './pages/Invitation';
+import Location from './pages/Location';
+import RSVP from './pages/RSVP';
+import Info from './pages/Info';
+import DesktopBlocker from './components/DesktopBlocker';
+import { useIsDesktop } from './hooks/useIsDesktop';
 
-function App() {
+export default function App() {
+  const [isEnvelopeOpen, setIsEnvelopeOpen] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  
+  const isDesktop = useIsDesktop(1024); // Use 1024px as the desktop breakpoint
+
+  if (isDesktop) {
+    return <DesktopBlocker />;
+  }
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
-      <div className="bg-surface-container p-12 rounded-xl shadow-lg border border-outline-variant max-w-2xl">
-        <h1 className="text-primary text-4xl mb-4">H & A</h1>
-        <h2 className="text-on-surface text-2xl mb-6">Nuestra Boda</h2>
-        <p className="text-on-surface-variant text-lg mb-8">
-          Próximamente...
-        </p>
-        <button className="bg-primary text-on-primary px-8 py-3 rounded-md font-semibold tracking-wide hover:bg-surface-tint transition-colors">
-          Abrir Invitación
-        </button>
-      </div>
-    </div>
-  )
-}
+    <BrowserRouter>
+      {!isLoaded && <Preloader onLoaded={() => setIsLoaded(true)} />}
+      
+      {/* The Envelope is an overlay that disappears after dragging the card up */}
+      <AnimatePresence>
+        {isLoaded && !isEnvelopeOpen && (
+          <div className="fixed inset-0 z-50">
+            <LayeredEnvelope key="envelope" onOpenComplete={() => setIsEnvelopeOpen(true)} />
+          </div>
+        )}
+      </AnimatePresence>
 
-export default App
+      {/* The Main App Routing System */}
+      <AnimatePresence>
+        {isEnvelopeOpen && (
+          <Routes>
+            <Route path="/" element={<MainLayout />}>
+              <Route index element={<Invitation />} />
+              <Route path="ubicacion" element={<Location />} />
+              <Route path="rsvp" element={<RSVP />} />
+              <Route path="info" element={<Info />} />
+            </Route>
+          </Routes>
+        )}
+      </AnimatePresence>
+    </BrowserRouter>
+  );
+}
