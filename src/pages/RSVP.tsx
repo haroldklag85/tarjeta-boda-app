@@ -6,6 +6,13 @@ export default function RSVP() {
   const [deseoText, setDeseoText] = useState('');
   const [invitadosExtras, setInvitadosExtras] = useState<{ id: number; nombre: string }[]>([]);
   const [nextId, setNextId] = useState(1);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText('80881308');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const agregarInvitado = () => {
     if (invitadosExtras.length < 2) {
@@ -225,8 +232,11 @@ export default function RSVP() {
             <p className="font-serif italic text-primary mb-2 text-lg">Transferencia Bancaria B-BRE</p>
             <p className="text-sm text-[#44483f] mb-1">Bancolombia llave</p>
             <p className="text-sm font-semibold tracking-wider text-[#2C3525] mb-4">80881308</p>
-            <button className="bg-[#e7f2da] text-primary px-6 py-2 rounded font-semibold text-sm hover:bg-[#d7e5c2] transition-colors">
-              Copiar llave B-BRE
+            <button 
+              onClick={handleCopy}
+              className="bg-[#e7f2da] text-primary px-6 py-2 rounded font-semibold text-sm hover:bg-[#d7e5c2] transition-colors"
+            >
+              {copied ? '¡Copiado!' : 'Copiar llave B-BRE'}
             </button>
           </div>
         </div>
