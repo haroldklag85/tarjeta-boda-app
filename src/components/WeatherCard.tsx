@@ -7,55 +7,43 @@ import {
   CloudLightning,
   CloudFog,
   CloudSun,
-  Thermometer,
   Droplets,
   Sunset,
-  ShieldAlert,
   Umbrella,
   Moon,
   Camera,
-  Shirt,
-  Footprints,
+  Leaf,
 } from 'lucide-react';
 import { useEventWeather, type WeatherSuggestion } from '../hooks/useEventWeather';
 
 const weatherIcons: Record<string, React.ReactNode> = {
-  sun: <Sun className="text-amber-400" size={40} strokeWidth={1.5} />,
-  'cloud-sun': <CloudSun className="text-amber-300" size={40} strokeWidth={1.5} />,
-  cloud: <Cloud className="text-gray-400" size={40} strokeWidth={1.5} />,
-  'cloud-rain': <CloudRain className="text-blue-400" size={40} strokeWidth={1.5} />,
-  'cloud-drizzle': <CloudDrizzle className="text-blue-300" size={40} strokeWidth={1.5} />,
-  'cloud-lightning': <CloudLightning className="text-yellow-500" size={40} strokeWidth={1.5} />,
-  'cloud-fog': <CloudFog className="text-gray-300" size={40} strokeWidth={1.5} />,
+  sun: <Sun className="text-[#C4A67D]" size={36} strokeWidth={1.2} />,
+  'cloud-sun': <CloudSun className="text-[#C4A67D]" size={36} strokeWidth={1.2} />,
+  cloud: <Cloud className="text-[#8a8d86]" size={36} strokeWidth={1.2} />,
+  'cloud-rain': <CloudRain className="text-[#8a8d86]" size={36} strokeWidth={1.2} />,
+  'cloud-drizzle': <CloudDrizzle className="text-[#8a8d86]" size={36} strokeWidth={1.2} />,
+  'cloud-lightning': <CloudLightning className="text-[#8a8d86]" size={36} strokeWidth={1.2} />,
+  'cloud-fog': <CloudFog className="text-[#8a8d86]" size={36} strokeWidth={1.2} />,
 };
 
 const suggestionIcons: Record<string, React.ReactNode> = {
-  umbrella: <Umbrella size={16} strokeWidth={1.5} />,
-  sun: <Sun size={16} strokeWidth={1.5} />,
-  droplets: <Droplets size={16} strokeWidth={1.5} />,
-  moon: <Moon size={16} strokeWidth={1.5} />,
-  camera: <Camera size={16} strokeWidth={1.5} />,
-  shirt: <Shirt size={16} strokeWidth={1.5} />,
-  footprints: <Footprints size={16} strokeWidth={1.5} />,
+  umbrella: <Umbrella className="text-[#566247]" size={14} strokeWidth={1.5} />,
+  sun: <Sun className="text-[#566247]" size={14} strokeWidth={1.5} />,
+  droplets: <Droplets className="text-[#566247]" size={14} strokeWidth={1.5} />,
+  moon: <Moon className="text-[#566247]" size={14} strokeWidth={1.5} />,
+  camera: <Camera className="text-[#566247]" size={14} strokeWidth={1.5} />,
+  shirt: <Leaf className="text-[#566247]" size={14} strokeWidth={1.5} />,
+  footprints: <Leaf className="text-[#566247]" size={14} strokeWidth={1.5} />,
 };
 
-const priorityColors: Record<string, string> = {
-  high: 'bg-red-50 border-red-200 text-red-800',
-  medium: 'bg-amber-50 border-amber-200 text-amber-800',
-  low: 'bg-green-50 border-green-200 text-green-800',
-};
-
-function SuggestionPill({ suggestion }: { suggestion: WeatherSuggestion }) {
+function SuggestionItem({ suggestion }: { suggestion: WeatherSuggestion }) {
   return (
-    <motion.div
-      className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-xs leading-relaxed ${priorityColors[suggestion.priority]}`}
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.4 }}
-    >
-      <span className="mt-0.5 flex-shrink-0">{suggestionIcons[suggestion.icon] ?? <ShieldAlert size={16} />}</span>
-      <span>{suggestion.text}</span>
-    </motion.div>
+    <div className="flex items-start gap-2.5 py-2">
+      <span className="mt-0.5 flex-shrink-0 opacity-70">
+        {suggestionIcons[suggestion.icon] ?? <Leaf className="text-[#566247]" size={14} strokeWidth={1.5} />}
+      </span>
+      <span className="text-[0.8rem] text-[#44483f] leading-relaxed">{suggestion.text}</span>
+    </div>
   );
 }
 
@@ -64,20 +52,19 @@ export default function WeatherCard() {
 
   if (weather.isLoading) {
     return (
-      <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/40 shadow-sm flex flex-col items-center gap-3 animate-pulse">
-        <div className="w-10 h-10 bg-[#e7f2da] rounded-full" />
-        <div className="h-4 bg-[#e7f2da] rounded w-48" />
-        <div className="h-3 bg-[#e7f2da] rounded w-32" />
-        <div className="h-16 bg-[#e7f2da] rounded w-full mt-2" />
+      <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/20 shadow-[0_4px_20px_rgba(44,53,37,0.05)] flex flex-col items-center gap-3 animate-pulse">
+        <div className="w-8 h-8 bg-[#e7f2da] rounded-full" />
+        <div className="h-3 bg-[#e7f2da] rounded w-40" />
+        <div className="h-3 bg-[#e7f2da] rounded w-28 mt-1" />
       </div>
     );
   }
 
   if (weather.error) {
     return (
-      <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/40 shadow-sm text-center">
-        <Cloud className="text-[#D1C4B0] mx-auto mb-2" size={32} strokeWidth={1.5} />
-        <p className="text-sm text-[#44483f]">{weather.error}</p>
+      <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/20 shadow-[0_4px_20px_rgba(44,53,37,0.05)] text-center">
+        <Cloud className="text-[#D1C4B0] mx-auto mb-2" size={28} strokeWidth={1.2} />
+        <p className="text-[0.85rem] text-[#44483f] italic">{weather.error}</p>
       </div>
     );
   }
@@ -86,93 +73,82 @@ export default function WeatherCard() {
 
   return (
     <motion.div
-      className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/40 shadow-sm flex flex-col gap-5"
+      className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/20 shadow-[0_4px_20px_rgba(44,53,37,0.05)] flex flex-col"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
+      transition={{ duration: 0.6 }}
     >
-      {/* Header */}
-      <div className="flex items-center gap-2 justify-center">
-        <Thermometer className="text-primary" size={20} strokeWidth={1.5} />
-        <h3 className="font-serif text-lg text-[#2C3525]">Clima del Evento</h3>
-      </div>
+      {/* Title */}
+      <h3 className="text-center font-serif text-[1.25rem] text-[#2C3525] mb-1">
+        Prepárate para el día
+      </h3>
+      <p className="text-center text-[0.8rem] text-[#8a8d86] italic mb-5">
+        27 de noviembre · Rivera, Huila
+      </p>
 
       {/* Proximity badge */}
-      <div className="text-center">
-        <span className={`inline-block text-[11px] font-medium px-3 py-1 rounded-full ${
-          isHistorical 
-            ? 'bg-[#e7f2da] text-[#566247]' 
-            : weather.proximityType === 'today'
-            ? 'bg-amber-100 text-amber-800'
-            : 'bg-blue-50 text-blue-700'
-        }`}>
-          {weather.proximityMessage}
-        </span>
-      </div>
+      <p className="text-center text-[0.7rem] font-medium text-[#566247] bg-[#e7f2da] px-4 py-1.5 rounded-full self-center mb-5">
+        {weather.proximityMessage}
+      </p>
 
-      {/* Main weather display */}
-      <div className="flex items-center justify-center gap-6">
-        {/* Icon */}
+      {/* Main weather */}
+      <div className="flex items-center justify-center gap-5 mb-5">
         <motion.div
-          animate={{ y: [0, -4, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ y: [0, -3, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         >
           {weatherIcons[weather.weatherIcon] ?? weatherIcons['cloud']}
         </motion.div>
 
-        {/* Temperature */}
-        <div className="text-center">
-          <p className="text-3xl font-bold text-[#2C3525]">
+        <div>
+          <p className="text-[2rem] font-serif text-[#2C3525] leading-none">
             {weather.tempMax}°
-            <span className="text-lg text-[#8a8d86] font-normal ml-1">/ {weather.tempMin}°</span>
+            <span className="text-[1rem] text-[#8a8d86] font-normal">/{weather.tempMin}°</span>
           </p>
-          <p className="text-sm text-[#44483f] italic">{weather.weatherDescription}</p>
+          <p className="text-[0.8rem] text-[#44483f] italic mt-1">{weather.weatherDescription}</p>
         </div>
       </div>
 
-      {/* Stats row */}
-      <div className="flex justify-around border-t border-[#D1C4B0]/30 pt-4">
+      {/* Stats */}
+      <div className="flex justify-around py-4 border-t border-b border-[#D1C4B0]/25">
         <div className="flex flex-col items-center gap-1">
-          <Droplets className="text-blue-400" size={18} strokeWidth={1.5} />
-          <span className="text-xs font-semibold text-[#2C3525]">{weather.precipitationProbability}%</span>
-          <span className="text-[10px] text-[#8a8d86]">Lluvia</span>
+          <Droplets className="text-[#8a8d86]" size={16} strokeWidth={1.2} />
+          <span className="text-[0.85rem] font-semibold text-[#2C3525]">{weather.precipitationProbability}%</span>
+          <span className="text-[0.65rem] text-[#8a8d86]">Lluvia</span>
         </div>
         <div className="flex flex-col items-center gap-1">
-          <Sun className="text-amber-400" size={18} strokeWidth={1.5} />
-          <span className="text-xs font-semibold text-[#2C3525]">{weather.uvIndex}</span>
-          <span className="text-[10px] text-[#8a8d86]">Índice UV</span>
+          <Sun className="text-[#8a8d86]" size={16} strokeWidth={1.2} />
+          <span className="text-[0.85rem] font-semibold text-[#2C3525]">{weather.uvIndex}</span>
+          <span className="text-[0.65rem] text-[#8a8d86]">UV</span>
         </div>
         <div className="flex flex-col items-center gap-1">
-          <Sunset className="text-orange-400" size={18} strokeWidth={1.5} />
-          <span className="text-xs font-semibold text-[#2C3525]">{weather.sunset}</span>
-          <span className="text-[10px] text-[#8a8d86]">Atardecer</span>
+          <Sunset className="text-[#8a8d86]" size={16} strokeWidth={1.2} />
+          <span className="text-[0.85rem] font-semibold text-[#2C3525]">{weather.sunset}</span>
+          <span className="text-[0.65rem] text-[#8a8d86]">Atardecer</span>
         </div>
       </div>
 
       {/* Suggestions */}
       {weather.suggestions.length > 0 && (
-        <div className="flex flex-col gap-2 border-t border-[#D1C4B0]/30 pt-4">
-          <p className="text-[11px] font-bold text-[#44483f] uppercase tracking-wider text-center mb-1">
-            Sugerencias para el día
+        <div className="flex flex-col pt-4">
+          <p className="text-[0.7rem] font-semibold text-[#8a8d86] uppercase tracking-[0.15em] text-center mb-2">
+            Sugerencias
           </p>
-          {weather.suggestions.map((s, i) => (
-            <SuggestionPill key={i} suggestion={s} />
-          ))}
+          <div className="flex flex-col divide-y divide-[#D1C4B0]/15">
+            {weather.suggestions.map((s, i) => (
+              <SuggestionItem key={i} suggestion={s} />
+            ))}
+          </div>
         </div>
       )}
 
       {/* Historical disclaimer */}
       {isHistorical && (
-        <p className="text-[10px] text-[#8a8d86] text-center italic mt-1">
-          * Basado en promedios históricos de los últimos 5 años para esta fecha en Rivera, Huila.
+        <p className="text-[0.65rem] text-[#8a8d86] text-center italic mt-4 leading-relaxed">
+          Basado en promedios históricos de los últimos 5 años.
           El pronóstico real estará disponible 16 días antes del evento.
         </p>
       )}
-
-      {/* Date */}
-      <p className="text-center text-xs text-[#566247] font-serif italic">
-        27 de noviembre de 2026 · Rivera, Huila
-      </p>
     </motion.div>
   );
 }

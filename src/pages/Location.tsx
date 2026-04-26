@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Church, Wine, Utensils, PartyPopper, Shirt, MapPin, Navigation, X } from 'lucide-react';
+import { Church, Wine, Utensils, PartyPopper, Shirt, MapPin, Navigation, X, Leaf } from 'lucide-react';
 import { useState } from 'react';
 import WeatherCard from '../components/WeatherCard';
 
@@ -217,8 +217,15 @@ export default function Location() {
         )}
       </AnimatePresence>
 
+      {/* Divider */}
+      <motion.div className="w-full flex justify-center items-center gap-4 my-10 opacity-50" variants={itemVariants}>
+        <div className="h-px bg-[#D1C4B0] flex-1"></div>
+        <Leaf className="text-[#D1C4B0]" size={16} strokeWidth={1.5} />
+        <div className="h-px bg-[#D1C4B0] flex-1"></div>
+      </motion.div>
+
       {/* Weather Forecast Section */}
-      <motion.section className="w-full" variants={itemVariants}>
+      <motion.section className="w-full mb-8" variants={itemVariants}>
         <WeatherCard />
       </motion.section>
     </motion.div>
