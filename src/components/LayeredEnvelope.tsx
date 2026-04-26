@@ -115,7 +115,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
 
     // Text appears at 1.5s, stays for ~6 seconds, then fades out
     const textStartTime = 1.5;
-    const textEndTime = textStartTime + 4.7; // 4.7 seconds of visibility
+    const textEndTime = textStartTime + 4.8; // 4.8 seconds of visibility
 
     if (t >= textStartTime && t < textEndTime) {
       setEnvelopeTextVisible(true);
