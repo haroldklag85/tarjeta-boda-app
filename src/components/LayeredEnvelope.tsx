@@ -81,7 +81,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
       let i = 0;
       const fullText = GUEST_NAME_MOCK.replace(/\n/g, '\n');
       setTypewriterText('');
-      const charDelay = 3500 / fullText.length; // ~3.5s to type entire text
+      const charDelay = 1500 / fullText.length; // ~1.5s to type entire text (fast)
       const interval = setInterval(() => {
         i++;
         setTypewriterText(fullText.slice(0, i));
@@ -113,9 +113,13 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
     const t = v.currentTime;
     const dur = v.duration || 8;
 
-    if (t >= 1.5 && t < dur - 2) {
+    // Text appears at 1.5s, stays for ~6 seconds, then fades out
+    const textStartTime = 1.5;
+    const textEndTime = textStartTime + 6; // 6 seconds of visibility
+
+    if (t >= textStartTime && t < textEndTime) {
       setEnvelopeTextVisible(true);
-    } else if (t >= dur - 2) {
+    } else if (t >= textEndTime) {
       setEnvelopeTextVisible(false);
     }
   }, [phase]);
@@ -249,8 +253,8 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
           <p
             className="text-center font-serif leading-tight"
             style={{
-              color: '#2C3525',
-              fontSize: 'clamp(7px, 2.2vw, 11px)',
+              color: '#514e3a',
+              fontSize: 'clamp(10px, 2.8vw, 14px)',
               textShadow: '0 0 2px rgba(255,255,255,0.6)',
               whiteSpace: 'pre-line',
             }}
