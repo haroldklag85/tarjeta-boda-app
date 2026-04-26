@@ -304,7 +304,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
                 left: '50%',
                 x: '-50%',
                 rotate: '-1.5deg',
-                width: 'min(65vw, 260px)',
+                width: 'min(58vw, 230px)',
                 height: '26vh',
               }}
               initial={{ opacity: 0, y: '0%' }}
@@ -314,22 +314,22 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
               <motion.div className="w-full h-full relative" animate={cardControls}>
                 {/* Card text */}
                 <div
-                  className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center"
+                  className="absolute inset-0 flex flex-col items-center justify-center px-2 text-center"
                   style={{
                     color: '#2C3525',
                     fontFamily: '"Noto Serif", serif'
                   }}
                 >
-                  <p className="text-[8px] sm:text-[9px] leading-snug mb-1 opacity-90 max-w-[85%] mx-auto">
+                  <p className="text-[6px] sm:text-[8px] leading-snug mb-1 opacity-90 max-w-[90%] mx-auto">
                     Con nuestro amor, la bendición de Dios y la de nuestros padres
                   </p>
-                  <p className="text-[9px] sm:text-[10px] mb-1">
+                  <p className="text-[7px] sm:text-[9px] mb-1">
                     Nosotros
                   </p>
-                  <h2 className="text-base sm:text-lg font-bold my-1 uppercase tracking-widest">
+                  <h2 className="text-sm sm:text-base font-bold my-1 uppercase tracking-widest">
                     Ana M. & Harold
                   </h2>
-                  <p className="text-[8px] sm:text-[9px] leading-snug mt-1 opacity-90 max-w-[85%] mx-auto">
+                  <p className="text-[6px] sm:text-[8px] leading-snug mt-1 opacity-90 max-w-[90%] mx-auto">
                     tenemos el honor de invitarte<br />
                     a nuestro matrimonio.
                   </p>
