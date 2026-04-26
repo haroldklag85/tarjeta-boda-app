@@ -115,7 +115,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
 
     // Text appears at 1.5s, stays for ~6 seconds, then fades out
     const textStartTime = 1.5;
-    const textEndTime = textStartTime + 6; // 6 seconds of visibility
+    const textEndTime = textStartTime + 4.7; // 4.7 seconds of visibility
 
     if (t >= textStartTime && t < textEndTime) {
       setEnvelopeTextVisible(true);
@@ -239,7 +239,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
         <motion.div
           className="absolute pointer-events-none"
           style={{
-            top: '43%',
+            top: '46%',
             left: '48%',
             transform: 'translate(-50%, -50%) rotate(15deg)',
             zIndex: 4,
@@ -251,11 +251,11 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
           transition={{ duration: 0.4 }}
         >
           <p
-            className="text-center font-serif leading-tight"
+            className="text-center leading-tight"
             style={{
               color: '#514e3a',
-              fontSize: 'clamp(10px, 2.8vw, 14px)',
-              textShadow: '0 0 2px rgba(255,255,255,0.6)',
+              fontSize: 'clamp(11px, 3vw, 15px)',
+              fontFamily: '"Noto Serif", serif',
               whiteSpace: 'pre-line',
             }}
           >
