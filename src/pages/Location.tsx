@@ -104,25 +104,33 @@ export default function Location() {
       </motion.section>
 
       {/* Dress Code Section */}
-      <motion.section className="w-full relative overflow-hidden rounded-xl bg-[#edf7df] border border-[#D1C4B0]/30 p-12 text-center flex flex-col items-center justify-center shadow-sm" variants={itemVariants}>
+      <motion.section className="w-full relative overflow-hidden rounded-xl bg-[#edf7df] border border-[#D1C4B0]/30 p-8 sm:p-12 text-center flex flex-col items-center justify-center shadow-sm" variants={itemVariants}>
         <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#556b47] rounded-full blur-3xl opacity-20"></div>
         <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-[#d7e5c2] rounded-full blur-3xl opacity-20"></div>
 
         <div className="relative z-10 flex flex-col items-center w-full">
           <Shirt className="text-primary mb-3" size={36} strokeWidth={1.5} />
           <h2 className="text-[1.75rem] font-serif text-[#2C3525] mb-1">Dress Code</h2>
-          <p className="text-xl font-serif text-primary italic mb-6">Formal</p>
+          <p className="text-xl font-serif text-primary italic mb-4">Elegancia Cálida</p>
 
-          <div className="flex gap-12 justify-center mt-3 border-t border-[#D1C4B0]/50 pt-6 w-full max-w-xs">
+          <p className="text-[0.95rem] text-[#44483f] mb-6 leading-relaxed max-w-sm">
+            Nuestra boda será en tierra caliente, por eso les sugerimos un estilo formal tropical: fresco, cómodo y elegante.
+          </p>
+
+          <div className="flex flex-col gap-6 justify-center mt-2 border-t border-[#D1C4B0]/50 pt-6 w-full max-w-md">
             <div className="flex flex-col items-center gap-1">
-              <span className="text-sm font-semibold text-[#44483f]">Mujeres</span>
-              <span className="text-sm text-[#44483f]">Vestido largo</span>
+              <span className="text-sm font-bold text-[#2C3525] uppercase tracking-wider">Mujeres</span>
+              <span className="text-sm text-[#44483f] leading-relaxed">Vestidos largos o trajes elegantes. <br/><span className="italic">Agradecemos evitar blanco, marfil y beige.</span></span>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <span className="text-sm font-semibold text-[#44483f]">Hombres</span>
-              <span className="text-sm text-[#44483f]">Traje oscuro</span>
+              <span className="text-sm font-bold text-[#2C3525] uppercase tracking-wider">Hombres</span>
+              <span className="text-sm text-[#44483f] leading-relaxed">Pantalón formal liviano en lino o drill elegante, con camisa elegante.</span>
             </div>
           </div>
+
+          <p className="mt-8 text-xs text-[#566247] italic font-medium opacity-90 max-w-xs">
+            * Agradecemos evitar prendas deportivas, bermudas, pantalonetas o tenis.
+          </p>
         </div>
       </motion.section>
 

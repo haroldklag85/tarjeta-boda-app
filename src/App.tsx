@@ -10,6 +10,7 @@ import RSVP from './pages/RSVP';
 import Info from './pages/Info';
 import DesktopBlocker from './components/DesktopBlocker';
 import { useIsDesktop } from './hooks/useIsDesktop';
+import ScrollToTop from './components/ScrollToTop';
 
 export default function App() {
   const [isEnvelopeOpen, setIsEnvelopeOpen] = useState(false);
@@ -23,6 +24,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       {!isLoaded && <Preloader onLoaded={() => setIsLoaded(true)} />}
       
       {/* The Envelope is an overlay that disappears after dragging the card up */}
