@@ -52,7 +52,7 @@ export default function WeatherCard() {
 
   if (weather.isLoading) {
     return (
-      <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/20 shadow-[0_4px_20px_rgba(44,53,37,0.05)] flex flex-col items-center gap-3 animate-pulse">
+      <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/40 shadow-sm flex flex-col items-center gap-3 animate-pulse">
         <div className="w-8 h-8 bg-[#e7f2da] rounded-full" />
         <div className="h-3 bg-[#e7f2da] rounded w-40" />
         <div className="h-3 bg-[#e7f2da] rounded w-28 mt-1" />
@@ -62,7 +62,7 @@ export default function WeatherCard() {
 
   if (weather.error) {
     return (
-      <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/20 shadow-[0_4px_20px_rgba(44,53,37,0.05)] text-center">
+      <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/40 shadow-sm text-center">
         <Cloud className="text-[#D1C4B0] mx-auto mb-2" size={28} strokeWidth={1.2} />
         <p className="text-[0.85rem] text-[#44483f] italic">{weather.error}</p>
       </div>
@@ -73,16 +73,13 @@ export default function WeatherCard() {
 
   return (
     <motion.div
-      className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/20 shadow-[0_4px_20px_rgba(44,53,37,0.05)] flex flex-col"
+      className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/40 shadow-sm flex flex-col"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      {/* Title */}
-      <h3 className="text-center font-serif text-[1.25rem] text-[#2C3525] mb-1">
-        Prepárate para el día
-      </h3>
-      <p className="text-center text-[0.8rem] text-[#8a8d86] italic mb-5">
+      {/* Subtitle */}
+      <p className="text-center text-[0.8rem] text-[#8a8d86] italic mb-4">
         27 de noviembre · Rivera, Huila
       </p>
 

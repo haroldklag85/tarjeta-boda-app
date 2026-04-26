@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Church, Wine, Utensils, PartyPopper, Shirt, MapPin, Navigation, X, Leaf } from 'lucide-react';
+import { Church, Wine, Utensils, PartyPopper, Shirt, MapPin, Navigation, X } from 'lucide-react';
 import { useState } from 'react';
 import WeatherCard from '../components/WeatherCard';
 
@@ -21,7 +21,7 @@ export default function Location() {
 
   return (
     <motion.div
-      className="flex flex-col gap-20 w-full pb-12"
+      className="flex flex-col gap-14 w-full pb-12"
       variants={containerVariants}
       initial="hidden"
       animate="show"
@@ -108,7 +108,7 @@ export default function Location() {
       </motion.section>
 
       {/* Dress Code Section */}
-      <motion.section className="w-full relative overflow-hidden rounded-xl bg-[#edf7df] border border-[#D1C4B0]/30 p-8 sm:p-12 text-center flex flex-col items-center justify-center shadow-sm" variants={itemVariants}>
+      <motion.section className="w-full relative overflow-hidden rounded-xl bg-[#edf7df] border border-[#D1C4B0]/40 p-8 sm:p-12 text-center flex flex-col items-center justify-center shadow-sm" variants={itemVariants}>
         <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#556b47] rounded-full blur-3xl opacity-20"></div>
         <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-[#d7e5c2] rounded-full blur-3xl opacity-20"></div>
 
@@ -141,7 +141,7 @@ export default function Location() {
       {/* Location/Map Section */}
       <motion.section className="w-full flex flex-col gap-3" variants={itemVariants}>
         <h2 className="text-[1.75rem] font-serif text-[#2C3525] text-center mb-2">Ubicación</h2>
-        <div className="w-full h-64 rounded-xl overflow-hidden border border-[#D1C4B0]/40 relative shadow-[0_4px_20px_rgba(44,53,37,0.05)] bg-[#F2EFE9]">
+        <div className="w-full h-64 rounded-xl overflow-hidden border border-[#D1C4B0]/40 relative shadow-sm bg-[#F2EFE9]">
           <iframe 
             src="https://maps.google.com/maps?q=Casa+de+Campo+Diana+Carolina,+Rivera,+Huila&t=&z=15&ie=UTF8&iwloc=&output=embed" 
             className="w-full h-[150%] -mt-10 object-cover opacity-60 grayscale-[50%] pointer-events-none" 
@@ -217,15 +217,9 @@ export default function Location() {
         )}
       </AnimatePresence>
 
-      {/* Divider */}
-      <motion.div className="w-full flex justify-center items-center gap-4 my-10 opacity-50" variants={itemVariants}>
-        <div className="h-px bg-[#D1C4B0] flex-1"></div>
-        <Leaf className="text-[#D1C4B0]" size={16} strokeWidth={1.5} />
-        <div className="h-px bg-[#D1C4B0] flex-1"></div>
-      </motion.div>
-
       {/* Weather Forecast Section */}
-      <motion.section className="w-full mb-8" variants={itemVariants}>
+      <motion.section className="w-full flex flex-col items-center" variants={itemVariants}>
+        <h2 className="text-[1.75rem] font-serif text-[#2C3525] text-center mb-4 uppercase tracking-wider">Pronóstico</h2>
         <WeatherCard />
       </motion.section>
     </motion.div>

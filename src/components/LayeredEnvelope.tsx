@@ -39,6 +39,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
   const [videoReady, setVideoReady] = useState(false);
   const [envelopeTextVisible, setEnvelopeTextVisible] = useState(false);
   const [typewriterText, setTypewriterText] = useState('');
+  const [isZoomed, setIsZoomed] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const typewriterIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cardControls = useAnimation();
@@ -168,7 +169,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
 
   const handleCardDragEnd = useCallback(
     (_e: any, info: any) => {
-      if (phase !== 'pulling') return;
+      if (phase !== 'pulling' || isZoomed) return;
 
       if (info.offset.y < -60 || info.velocity.y < -180) {
         cardControls
@@ -194,10 +195,21 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
 
   return (
     <motion.div
-      className="fixed inset-0 overflow-hidden"
+      className="fixed inset-0 overflow-hidden bg-black"
+      initial={{ scale: 1 }}
+      animate={{ scale: isZoomed ? 1.7 : 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.8 }}
+      transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
     >
+      {/* Dark overlay when zoomed */}
+      <motion.div
+        className="absolute inset-0 bg-black/60 pointer-events-none"
+        style={{ zIndex: 1 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isZoomed ? 1 : 0 }}
+        transition={{ duration: 0.4 }}
+      />
+
       {/* ═══════════════════════════════════════════
           THE VIDEO — always visible, is the entire scene
           ═══════════════════════════════════════════ */}
@@ -393,13 +405,18 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
           transition={{ duration: 0.5 }}
           style={{ touchAction: 'none' }} // Prevent browser pull-to-refresh
         >
-          {/* Invisible full-screen draggable area */}
+          {/* Invisible full-screen draggable/clickable area */}
           <motion.div
-            className="absolute inset-0 cursor-grab active:cursor-grabbing flex items-center justify-center"
-            drag={phase === 'pulling' ? 'y' : false}
+            className={`absolute inset-0 flex items-center justify-center ${isZoomed ? 'cursor-zoom-out' : 'cursor-grab active:cursor-grabbing'}`}
+            drag={phase === 'pulling' && !isZoomed ? 'y' : false}
             dragConstraints={{ top: -600, bottom: 0 }}
             dragElastic={0.1}
             onDragEnd={handleCardDragEnd}
+            onClick={() => {
+              if (phase === 'pulling') {
+                setIsZoomed(!isZoomed);
+              }
+            }}
           >
             {/* Card positioned over the video's open envelope opening */}
             {/* Video last frame: envelope center ~50%, opening starts ~38% */}
@@ -443,16 +460,32 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
               </motion.div>
             </motion.div>
 
-            {/* Drag hint */}
-            {phase === 'pulling' && (
-              <motion.p
-                className="absolute left-0 right-0 text-center text-[10px] text-white/80 font-sans tracking-[0.2em] uppercase drop-shadow-md pointer-events-none"
-                style={{ bottom: '15%' }}
+            {/* Drag / Zoom hints */}
+            {phase === 'pulling' && !isZoomed && (
+              <motion.div
+                className="absolute left-0 right-0 flex flex-col items-center gap-2 pointer-events-none"
+                style={{ bottom: '12%' }}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1, duration: 0.6 }}
               >
-                ↑ Desliza hacia arriba en cualquier lugar
+                <p className="text-[10px] text-white/80 font-sans tracking-[0.2em] uppercase drop-shadow-md">
+                  Toca para acercar 🔍
+                </p>
+                <p className="text-[10px] text-white/80 font-sans tracking-[0.2em] uppercase drop-shadow-md">
+                  ↑ Desliza hacia arriba
+                </p>
+              </motion.div>
+            )}
+
+            {isZoomed && (
+              <motion.p
+                className="absolute left-0 right-0 text-center text-[7px] text-white font-sans tracking-[0.2em] uppercase drop-shadow-md pointer-events-none"
+                style={{ bottom: '28%' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                Toca para alejar
               </motion.p>
             )}
           </motion.div>
