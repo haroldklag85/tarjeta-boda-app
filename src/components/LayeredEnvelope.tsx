@@ -37,8 +37,19 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
   const [phase, setPhase] = useState<Phase>('sealed');
   const [sealBroken, setSealBroken] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [envelopeTextVisible, setEnvelopeTextVisible] = useState(false);
+  const [typewriterText, setTypewriterText] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
+  const typewriterIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cardControls = useAnimation();
+
+  // ══════════════════════════════════════════════════════════════
+  // TODO [BACKEND]: Reemplazar este nombre mock por el nombre real
+  // del invitado obtenido de la base de datos (Supabase).
+  // El valor debe venir como prop o desde un contexto/hook.
+  // Ej: const guestName = useGuestName(invitationId);
+  // ══════════════════════════════════════════════════════════════
+  const GUEST_NAME_MOCK = 'Señor y Señora\nPipito Pérez e Hijos';
 
   // On mount: seek video to the first good frame
   useEffect(() => {
@@ -63,6 +74,51 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
       v.removeEventListener('seeked', handleSeeked);
     };
   }, []);
+
+  // Typewriter effect — triggered when envelopeTextVisible becomes true
+  useEffect(() => {
+    if (envelopeTextVisible) {
+      let i = 0;
+      const fullText = GUEST_NAME_MOCK.replace(/\n/g, '\n');
+      setTypewriterText('');
+      const charDelay = 3500 / fullText.length; // ~3.5s to type entire text
+      const interval = setInterval(() => {
+        i++;
+        setTypewriterText(fullText.slice(0, i));
+        if (i >= fullText.length) {
+          clearInterval(interval);
+        }
+      }, charDelay);
+      typewriterIntervalRef.current = interval;
+
+      return () => {
+        if (typewriterIntervalRef.current) {
+          clearInterval(typewriterIntervalRef.current);
+        }
+      };
+    } else {
+      setTypewriterText('');
+      if (typewriterIntervalRef.current) {
+        clearInterval(typewriterIntervalRef.current);
+        typewriterIntervalRef.current = null;
+      }
+    }
+  }, [envelopeTextVisible]);
+
+  // Video timeupdate — controls when the guest name text is visible
+  const handleTimeUpdate = useCallback(() => {
+    const v = videoRef.current;
+    if (!v || phase !== 'playing') return;
+
+    const t = v.currentTime;
+    const dur = v.duration || 8;
+
+    if (t >= 1.5 && t < dur - 2) {
+      setEnvelopeTextVisible(true);
+    } else if (t >= dur - 2) {
+      setEnvelopeTextVisible(false);
+    }
+  }, [phase]);
 
   const handleSealTap = useCallback(() => {
     if (phase !== 'sealed') return;
@@ -157,6 +213,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
         muted
         preload="auto"
         onEnded={handleVideoEnd}
+        onTimeUpdate={handleTimeUpdate}
       />
 
       {/* Fallback bg while video loads */}
@@ -167,6 +224,48 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
             background: 'linear-gradient(135deg, #d4b896 0%, #c4a37a 50%, #d9c5a8 100%)',
           }}
         />
+      )}
+
+      {/* ═══════════════════════════════════════════
+          GUEST NAME TEXT — typewriter on the visible paper
+          Appears at video t=1.5s, disappears at t=(duration-2)s
+          Rotated 15° to match paper angle inside envelope
+          ═══════════════════════════════════════════ */}
+      {phase === 'playing' && envelopeTextVisible && (
+        <motion.div
+          className="absolute pointer-events-none"
+          style={{
+            top: '43%',
+            left: '48%',
+            transform: 'translate(-50%, -50%) rotate(15deg)',
+            zIndex: 4,
+            width: 'min(42vw, 170px)',
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <p
+            className="text-center font-serif leading-tight"
+            style={{
+              color: '#2C3525',
+              fontSize: 'clamp(7px, 2.2vw, 11px)',
+              textShadow: '0 0 2px rgba(255,255,255,0.6)',
+              whiteSpace: 'pre-line',
+            }}
+          >
+            {typewriterText}
+            <motion.span
+              className="inline-block ml-[1px]"
+              style={{ color: '#44483f' }}
+              animate={{ opacity: [1, 0] }}
+              transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
+            >
+              |
+            </motion.span>
+          </p>
+        </motion.div>
       )}
 
       {/* ═══════════════════════════════════════════
