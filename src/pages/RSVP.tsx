@@ -138,14 +138,24 @@ export default function RSVP() {
           El mejor regalo es tu presencia, pero si deseas tener un detalle con nosotros, te compartimos nuestras opciones.
         </p>
         
-        {/* Bank Details Card */}
-        <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/40 shadow-sm flex flex-col items-center">
-          <p className="font-serif italic text-primary mb-2">Transferencia Bancaria</p>
-          <p className="text-sm text-[#44483f] mb-1">Banco BBVA</p>
-          <p className="text-sm font-semibold tracking-wider text-[#2C3525] mb-4">012 345 6789 0123 4567</p>
-          <button className="bg-[#e7f2da] text-primary px-6 py-2 rounded font-semibold text-sm hover:bg-[#d7e5c2] transition-colors">
-            Copiar CLABE
-          </button>
+        <div className="flex flex-col gap-4 w-full">
+          {/* Lluvia de Sobres Card */}
+          <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/40 shadow-sm flex flex-col items-center">
+            <p className="font-serif italic text-primary mb-2 text-lg">Lluvia de sobres</p>
+            <p className="text-sm text-[#44483f] text-center max-w-[250px] leading-relaxed">
+              Recibiremos tu lluvia de sobres con mucho amor y gratitud.
+            </p>
+          </div>
+
+          {/* Bank Details Card */}
+          <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/40 shadow-sm flex flex-col items-center">
+            <p className="font-serif italic text-primary mb-2 text-lg">Transferencia Bancaria</p>
+            <p className="text-sm text-[#44483f] mb-1">Banco BBVA</p>
+            <p className="text-sm font-semibold tracking-wider text-[#2C3525] mb-4">012 345 6789 0123 4567</p>
+            <button className="bg-[#e7f2da] text-primary px-6 py-2 rounded font-semibold text-sm hover:bg-[#d7e5c2] transition-colors">
+              Copiar CLABE
+            </button>
+          </div>
         </div>
       </motion.section>
     </motion.div>
