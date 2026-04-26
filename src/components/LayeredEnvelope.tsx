@@ -111,7 +111,6 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
     if (!v || phase !== 'playing') return;
 
     const t = v.currentTime;
-    const dur = v.duration || 8;
 
     // Text appears at 1.5s, stays for ~6 seconds, then fades out
     const textStartTime = 1.5;
