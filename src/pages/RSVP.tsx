@@ -45,13 +45,27 @@ export default function RSVP() {
         <form className="w-full flex flex-col gap-6 text-left">
           {/* Name Input */}
           <div className="flex flex-col gap-1">
-            <label className="text-[0.875rem] font-semibold text-[#44483f]" htmlFor="nombre">Nombre Completo</label>
+            <label className="text-[0.875rem] font-semibold text-[#44483f]" htmlFor="nombre">Nombre Completo *</label>
             <input
               className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-3 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc]"
               id="nombre"
               name="nombre"
               placeholder="Ej. Familia Pérez"
               type="text"
+              required
+            />
+          </div>
+
+          {/* Phone Input */}
+          <div className="flex flex-col gap-1 mt-2">
+            <label className="text-[0.875rem] font-semibold text-[#44483f]" htmlFor="telefono">Teléfono de contacto *</label>
+            <input
+              className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-3 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc]"
+              id="telefono"
+              name="telefono"
+              placeholder="Ej. 300 123 4567"
+              type="tel"
+              required
             />
           </div>
 
