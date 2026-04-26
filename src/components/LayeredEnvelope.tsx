@@ -257,6 +257,10 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
               fontSize: 'clamp(11px, 3vw, 15px)',
               fontFamily: '"Noto Serif", serif',
               whiteSpace: 'pre-line',
+              textShadow: 'none',
+              WebkitFontSmoothing: 'antialiased',
+              MozOsxFontSmoothing: 'grayscale',
+              mixBlendMode: 'multiply',
             }}
           >
             {typewriterText}
