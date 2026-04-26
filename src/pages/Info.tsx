@@ -16,7 +16,7 @@ export default function Info() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="flex flex-col w-full pb-12"
       variants={containerVariants}
       initial="hidden"
@@ -35,7 +35,7 @@ export default function Info() {
       {/* Content List */}
       <motion.section className="relative w-full" variants={itemVariants}>
         <div className="flex flex-col gap-12 relative">
-          
+
           {/* Card 1: Dress Code */}
           <div className="flex flex-col gap-3 items-center text-center">
             <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#e7f2da] flex items-center justify-center border border-[#D1C4B0] shadow-sm">
@@ -64,7 +64,7 @@ export default function Info() {
 
               {/* Color Palette */}
               <div className="mt-8 border-t border-[#D1C4B0]/30 pt-6">
-                <h4 className="text-sm font-serif text-[#2C3525] mb-4">Paleta de Colores Sugerida</h4>
+                <h4 className="text-sm font-serif text-[#2C3525] mb-4 text-center">Paleta de Colores Sugerida</h4>
                 <div className="grid grid-cols-6 gap-2 sm:gap-3 justify-items-center max-w-[280px] mx-auto">
                   {[
                     '#6B705C', '#A3A380', '#B35C44', '#A65F46', '#D1A14A', '#D8A7A7',
@@ -120,7 +120,7 @@ export default function Info() {
             <div className="bg-white rounded-xl p-6 shadow-[0_4px_20px_rgba(44,53,37,0.05)] w-full border border-[#D1C4B0]/20">
               <h3 className="text-[1.25rem] font-serif text-[#2C3525] mb-2">Australian Bar</h3>
               <p className="text-[1rem] text-[#44483f]">
-                Durante el evento tendremos bebidas disponibles y, adicionalmente, contaremos con un bar estilo australiano para quienes deseen consumir opciones extra.
+                Durante el evento tendremos bebidas disponibles y, adicionalmente, contaremos con un bar estilo australiano para quienes deseen consumos extra.
               </p>
             </div>
           </div>
