@@ -1,7 +1,10 @@
-import { motion } from 'framer-motion';
-import { Church, Wine, Utensils, PartyPopper, Shirt, MapPin } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Church, Wine, Utensils, PartyPopper, Shirt, MapPin, Navigation, X } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Location() {
+  const [showMapOptions, setShowMapOptions] = useState(false);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -150,12 +153,68 @@ export default function Location() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#F2EFE9] via-[#F2EFE9]/60 to-transparent flex flex-col justify-end p-6 pointer-events-none">
             <h3 className="text-xl font-serif text-[#2C3525] mb-1">Hacienda Casa de Campo Diana Carolina</h3>
             <p className="text-[#44483f] mb-4 text-sm">Huila, Carretera a Rivera</p>
-            <a href="https://maps.app.goo.gl/gHeK8PrupLjzwroq5" target="_blank" rel="noopener noreferrer" className="pointer-events-auto bg-white/90 backdrop-blur-md border border-primary text-primary px-4 py-2 rounded text-sm font-semibold w-fit hover:bg-primary hover:text-white transition-colors block text-center mt-2 shadow-sm">
+            <button 
+              onClick={() => setShowMapOptions(true)}
+              className="pointer-events-auto bg-white/90 backdrop-blur-md border border-primary text-primary px-4 py-2 rounded text-sm font-semibold w-fit hover:bg-primary hover:text-white transition-colors block text-center mt-2 shadow-sm"
+            >
               Abrir en Maps
-            </a>
+            </button>
           </div>
         </div>
       </motion.section>
+
+      {/* Map Options Modal */}
+      <AnimatePresence>
+        {showMapOptions && (
+          <motion.div 
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowMapOptions(false)}
+          >
+            <motion.div 
+              className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-6 shadow-xl flex flex-col gap-4"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-serif text-xl text-[#2C3525]">Elegir aplicación</h3>
+                <button onClick={() => setShowMapOptions(false)} className="text-[#8a8d86] hover:text-[#2C3525] transition-colors p-1">
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <a 
+                href="https://maps.app.goo.gl/gHeK8PrupLjzwroq5" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="w-full flex items-center justify-center gap-3 py-4 rounded-xl border border-[#D1C4B0] hover:bg-[#e7f2da]/30 transition-colors"
+                onClick={() => setShowMapOptions(false)}
+              >
+                <MapPin className="text-primary" size={20} />
+                <span className="font-semibold text-[#44483f]">Google Maps</span>
+              </a>
+
+              <a 
+                href="https://waze.com/ul?q=Hacienda%20Casa%20de%20Campo%20Diana%20Carolina%20Rivera%20Huila" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="w-full flex items-center justify-center gap-3 py-4 rounded-xl border border-[#D1C4B0] hover:bg-[#e7f2da]/30 transition-colors"
+                onClick={() => setShowMapOptions(false)}
+              >
+                <Navigation className="text-primary" size={20} />
+                <span className="font-semibold text-[#44483f]">Waze</span>
+              </a>
+              
+              <div className="h-4 sm:hidden"></div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

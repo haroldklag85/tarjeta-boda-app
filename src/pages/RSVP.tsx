@@ -19,7 +19,7 @@ export default function RSVP() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="flex flex-col w-full pb-12"
       variants={containerVariants}
       initial="hidden"
@@ -27,10 +27,10 @@ export default function RSVP() {
     >
       {/* Hero Image */}
       <motion.div className="w-full h-48 rounded-xl overflow-hidden mt-6 mb-12 shadow-sm" variants={itemVariants}>
-        <img 
-          alt="Hands with wedding bands" 
-          className="w-full h-full object-cover" 
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuDimWYmRKHU0Ydd3RZBngBXSihkABe3osiWU3LrOI2uKEbaYx9c82tj81ilQQb_Ub3ySWRGyKcjcf3kAka9w7wuXzg3O1NiuncebaMie6kiXnUBbE6_OGe9IYLaAVxhS8IbmF8D48SZY2QBaUSKbTnuGsF7kMYNAg62r-1W3MOoaGUTwRywKKHvqhOa6rHUcb8_AmTfz6-LJJOy7uOJYUYGUdYAXZXA6qHlyJ4pUL3NoQQHFXPgTWM83u87Yyoh-AUnUh0lAfE4EA" 
+        <img
+          alt="Hands with wedding bands"
+          className="w-full h-full object-cover"
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuDimWYmRKHU0Ydd3RZBngBXSihkABe3osiWU3LrOI2uKEbaYx9c82tj81ilQQb_Ub3ySWRGyKcjcf3kAka9w7wuXzg3O1NiuncebaMie6kiXnUBbE6_OGe9IYLaAVxhS8IbmF8D48SZY2QBaUSKbTnuGsF7kMYNAg62r-1W3MOoaGUTwRywKKHvqhOa6rHUcb8_AmTfz6-LJJOy7uOJYUYGUdYAXZXA6qHlyJ4pUL3NoQQHFXPgTWM83u87Yyoh-AUnUh0lAfE4EA"
         />
       </motion.div>
 
@@ -46,11 +46,11 @@ export default function RSVP() {
           {/* Name Input */}
           <div className="flex flex-col gap-1">
             <label className="text-[0.875rem] font-semibold text-[#44483f]" htmlFor="nombre">Nombre Completo</label>
-            <input 
-              className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-3 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc]" 
-              id="nombre" 
-              name="nombre" 
-              placeholder="Ej. Familia Pérez" 
+            <input
+              className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-3 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc]"
+              id="nombre"
+              name="nombre"
+              placeholder="Ej. Familia Pérez"
               type="text"
             />
           </div>
@@ -84,11 +84,11 @@ export default function RSVP() {
           {/* Allergies Input */}
           <div className="flex flex-col gap-1 mt-3">
             <label className="text-[0.875rem] font-semibold text-[#44483f]" htmlFor="alergias">Restricciones alimenticias o alergias</label>
-            <input 
-              className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-3 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc]" 
-              id="alergias" 
-              name="alergias" 
-              placeholder="Ninguna" 
+            <input
+              className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-3 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc]"
+              id="alergias"
+              name="alergias"
+              placeholder="Ninguna"
               type="text"
             />
           </div>
@@ -97,11 +97,11 @@ export default function RSVP() {
           <div className="flex flex-col gap-1 mt-6 mb-2">
             <label className="text-[0.875rem] font-semibold text-[#44483f]" htmlFor="deseo">Un deseo para nuestro camino</label>
             <div className="relative">
-              <textarea 
-                className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-3 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc] resize-none min-h-[100px]" 
-                id="deseo" 
-                name="deseo" 
-                placeholder="Escribe aquí un consejo, un mensaje de cariño o un buen deseo para esta nueva etapa..." 
+              <textarea
+                className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-3 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc] resize-none min-h-[100px]"
+                id="deseo"
+                name="deseo"
+                placeholder="Escribe aquí un consejo, un mensaje de cariño o un buen deseo para esta nueva etapa..."
                 maxLength={1000}
                 value={deseoText}
                 onChange={(e) => setDeseoText(e.target.value)}
@@ -113,8 +113,8 @@ export default function RSVP() {
           </div>
 
           {/* Submit Button */}
-          <button 
-            className="mt-12 w-full bg-primary text-white font-semibold py-4 rounded flex items-center justify-center gap-2 hover:bg-[#384c2b] transition-colors shadow-sm" 
+          <button
+            className="mt-12 w-full bg-primary text-white font-semibold py-4 rounded flex items-center justify-center gap-2 hover:bg-[#384c2b] transition-colors shadow-sm"
             type="button"
           >
             Confirmar Asistencia
@@ -137,7 +137,7 @@ export default function RSVP() {
         <p className="text-[1rem] text-[#44483f] mb-6 max-w-sm">
           El mejor regalo es tu presencia, pero si deseas tener un detalle con nosotros, te compartimos nuestras opciones.
         </p>
-        
+
         <div className="flex flex-col gap-4 w-full">
           {/* Lluvia de Sobres Card */}
           <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/40 shadow-sm flex flex-col items-center">
@@ -149,11 +149,11 @@ export default function RSVP() {
 
           {/* Bank Details Card */}
           <div className="w-full bg-white rounded-xl p-6 border border-[#D1C4B0]/40 shadow-sm flex flex-col items-center">
-            <p className="font-serif italic text-primary mb-2 text-lg">Transferencia Bancaria</p>
-            <p className="text-sm text-[#44483f] mb-1">Banco BBVA</p>
-            <p className="text-sm font-semibold tracking-wider text-[#2C3525] mb-4">012 345 6789 0123 4567</p>
+            <p className="font-serif italic text-primary mb-2 text-lg">Transferencia Bancaria B-BRE</p>
+            <p className="text-sm text-[#44483f] mb-1">Bancolombia llave</p>
+            <p className="text-sm font-semibold tracking-wider text-[#2C3525] mb-4">80881308</p>
             <button className="bg-[#e7f2da] text-primary px-6 py-2 rounded font-semibold text-sm hover:bg-[#d7e5c2] transition-colors">
-              Copiar CLABE
+              Copiar llave B-BRE
             </button>
           </div>
         </div>
