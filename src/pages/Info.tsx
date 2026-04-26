@@ -42,10 +42,47 @@ export default function Info() {
               <Shirt className="text-primary" size={20} strokeWidth={1.5} />
             </div>
             <div className="bg-white rounded-xl p-6 shadow-[0_4px_20px_rgba(44,53,37,0.05)] w-full border border-[#D1C4B0]/20">
-              <h3 className="text-[1.25rem] font-serif text-[#2C3525] mb-2">Código de Vestimenta</h3>
-              <p className="text-[1rem] text-[#44483f]">
-                Nuestra boda será en tierra caliente, por eso les sugerimos asistir con ropa fresca, cómoda y elegante. También recomendamos elegir un calzado apropiado para disfrutar cada momento, desde la ceremonia hasta la última canción.
-              </p>
+              <h3 className="text-[1.25rem] font-serif text-[#2C3525] mb-4">Código de Vestimenta</h3>
+              
+              <div className="flex flex-col gap-4 text-left text-[0.95rem] text-[#44483f]">
+                <p>
+                  <span className="font-serif italic text-primary font-bold">Elegancia cálida</span>, nuestra boda será en Rivera, Huila, en un ambiente natural, cálido y muy alegre. Les sugerimos asistir con un estilo formal tropical: elegante, fresco y cómodo para disfrutar la tarde y la noche.
+                </p>
+                <p>
+                  <span className="font-bold text-[#2C3525]">Para ellas</span>, recomendamos vestidos largos o trajes elegantes en tonos cálidos y naturales. Agradecemos evitar el blanco, marfil, beige o tonos muy claros similares, reservados para la novia.
+                </p>
+                <p>
+                  <span className="font-bold text-[#2C3525]">Para ellos</span>, sugerimos pantalón formal liviano, en lino o drill elegante, acompañado de camisa elegante de manga larga o manga corta. Por el clima, no será necesario usar saco o blazer.
+                </p>
+                <p className="italic text-[0.85rem] text-[#566247]">
+                  Les agradecemos evitar prendas deportivas o demasiado informales, como bermudas, pantalonetas o tenis.
+                </p>
+                <p className="text-center font-medium text-primary mt-2">
+                  Vengan cómodos, elegantes y listos para celebrar con mucha alegría.
+                </p>
+              </div>
+
+              {/* Color Palette */}
+              <div className="mt-8 border-t border-[#D1C4B0]/30 pt-6">
+                <h4 className="text-sm font-serif text-[#2C3525] mb-4">Paleta de Colores Sugerida</h4>
+                <div className="grid grid-cols-6 gap-2 sm:gap-3 justify-items-center max-w-[280px] mx-auto">
+                  {[
+                    '#6B705C', '#A3A380', '#B35C44', '#A65F46', '#D1A14A', '#D8A7A7',
+                    '#A9C5D3', '#3F6F73', '#B8734B', '#7B3F4C', '#5A3E2B', '#B08A5A'
+                  ].map((color, idx) => (
+                    <motion.div
+                      key={idx}
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full shadow-sm cursor-pointer border border-black/10"
+                      style={{ backgroundColor: color }}
+                      whileHover={{ scale: 1.25, zIndex: 10 }}
+                      whileTap={{ scale: 1.15 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      aria-label={`Color sugerido ${color}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
             </div>
           </div>
 
