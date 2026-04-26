@@ -107,6 +107,34 @@ export default function Invitation() {
             <span className="text-on-surface-variant uppercase tracking-widest text-[9px] md:text-[10px] mt-1 font-semibold">Seg</span>
           </div>
         </motion.div>
+
+        {/* Engagement Photo — Polaroid Style */}
+        <motion.div
+          className="mt-14 mb-4 flex flex-col items-center"
+          initial={{ opacity: 0, y: 30, rotate: 0 }}
+          animate={{ opacity: 1, y: 0, rotate: -2.5 }}
+          transition={{ duration: 1, delay: 1.3 }}
+        >
+          <div
+            className="relative bg-white p-3 pb-14 rounded-sm shadow-[0_8px_30px_rgba(44,53,37,0.12)] border border-[#D1C4B0]/30"
+            style={{ transform: 'rotate(-2.5deg)' }}
+          >
+            <div className="w-56 h-64 overflow-hidden rounded-sm">
+              <img
+                alt="Día del compromiso"
+                className="w-full h-full object-cover"
+                src="/fotoPropuesta.jpeg"
+              />
+            </div>
+            {/* Handwritten caption */}
+            <p
+              className="absolute bottom-4 left-0 right-0 text-center text-[0.85rem] text-[#44483f] italic"
+              style={{ fontFamily: '"Noto Serif", serif' }}
+            >
+              El día que todo comenzó...
+            </p>
+          </div>
+        </motion.div>
       </motion.div>
     </>
   );
