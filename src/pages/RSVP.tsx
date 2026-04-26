@@ -1,9 +1,26 @@
-import { motion } from 'framer-motion';
-import { Mail, Gift, PlusCircle, ArrowRight, Leaf } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Gift, PlusCircle, ArrowRight, Leaf, X } from 'lucide-react';
 import { useState } from 'react';
 
 export default function RSVP() {
   const [deseoText, setDeseoText] = useState('');
+  const [invitadosExtras, setInvitadosExtras] = useState<{ id: number; nombre: string }[]>([]);
+  const [nextId, setNextId] = useState(1);
+
+  const agregarInvitado = () => {
+    if (invitadosExtras.length < 4) {
+      setInvitadosExtras([...invitadosExtras, { id: nextId, nombre: '' }]);
+      setNextId(nextId + 1);
+    }
+  };
+
+  const removerInvitado = (id: number) => {
+    setInvitadosExtras(invitadosExtras.filter(inv => inv.id !== id));
+  };
+
+  const actualizarInvitado = (id: number, nombre: string) => {
+    setInvitadosExtras(invitadosExtras.map(inv => inv.id === id ? { ...inv, nombre } : inv));
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -69,11 +86,53 @@ export default function RSVP() {
             />
           </div>
 
-          <div className="flex flex-col gap-3 mt-3">
-            <button className="flex items-center gap-2 text-primary font-serif italic hover:opacity-80 transition-opacity w-fit" type="button">
-              <PlusCircle size={20} strokeWidth={1.5} />
-              + Agregar invitado
-            </button>
+          {/* Invitados Extras */}
+          <div className="flex flex-col gap-4 mt-2">
+            <AnimatePresence>
+              {invitadosExtras.map((invitado, index) => (
+                <motion.div 
+                  key={invitado.id}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex flex-col gap-1 overflow-hidden"
+                >
+                  <div className="flex justify-between items-center mt-2">
+                    <label className="text-[0.875rem] font-semibold text-[#44483f]" htmlFor={`invitado-${invitado.id}`}>
+                      Invitado adicional {index + 1} (Opcional)
+                    </label>
+                    <button 
+                      type="button" 
+                      onClick={() => removerInvitado(invitado.id)}
+                      className="text-[#8a8d86] hover:text-[#b35c44] transition-colors p-1"
+                      aria-label="Eliminar invitado"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <input
+                    className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-2 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc]"
+                    id={`invitado-${invitado.id}`}
+                    name={`invitado-${invitado.id}`}
+                    placeholder="Nombre completo del invitado"
+                    type="text"
+                    value={invitado.nombre}
+                    onChange={(e) => actualizarInvitado(invitado.id, e.target.value)}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {invitadosExtras.length < 4 && (
+              <button 
+                onClick={agregarInvitado}
+                className="flex items-center gap-2 text-primary font-serif italic hover:opacity-80 transition-opacity w-fit mt-1" 
+                type="button"
+              >
+                <PlusCircle size={20} strokeWidth={1.5} />
+                + Agregar invitado {invitadosExtras.length > 0 && `(${invitadosExtras.length}/4)`}
+              </button>
+            )}
           </div>
 
           {/* Attendance Toggle */}
