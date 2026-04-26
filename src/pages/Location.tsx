@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Church, Wine, Utensils, PartyPopper, Shirt, MapPin, Navigation, X } from 'lucide-react';
 import { useState } from 'react';
+import WeatherCard from '../components/WeatherCard';
 
 export default function Location() {
   const [showMapOptions, setShowMapOptions] = useState(false);
@@ -215,6 +216,11 @@ export default function Location() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Weather Forecast Section */}
+      <motion.section className="w-full" variants={itemVariants}>
+        <WeatherCard />
+      </motion.section>
     </motion.div>
   );
 }
