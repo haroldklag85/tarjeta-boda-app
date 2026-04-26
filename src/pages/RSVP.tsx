@@ -1,7 +1,10 @@
 import { motion } from 'framer-motion';
 import { Mail, Gift, PlusCircle, ArrowRight, Leaf } from 'lucide-react';
+import { useState } from 'react';
 
 export default function RSVP() {
+  const [deseoText, setDeseoText] = useState('');
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -88,6 +91,25 @@ export default function RSVP() {
               placeholder="Ninguna" 
               type="text"
             />
+          </div>
+
+          {/* Deseo Input */}
+          <div className="flex flex-col gap-1 mt-6 mb-2">
+            <label className="text-[0.875rem] font-semibold text-[#44483f]" htmlFor="deseo">Un deseo para nuestro camino</label>
+            <div className="relative">
+              <textarea 
+                className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-3 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc] resize-none min-h-[100px]" 
+                id="deseo" 
+                name="deseo" 
+                placeholder="Escribe aquí un consejo, un mensaje de cariño o un buen deseo para esta nueva etapa..." 
+                maxLength={1000}
+                value={deseoText}
+                onChange={(e) => setDeseoText(e.target.value)}
+              />
+              <span className="absolute -bottom-5 right-0 text-[11px] text-[#8a8d86] font-medium tracking-wide">
+                {deseoText.length} / 1000
+              </span>
+            </div>
           </div>
 
           {/* Submit Button */}
