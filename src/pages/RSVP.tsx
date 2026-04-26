@@ -8,7 +8,7 @@ export default function RSVP() {
   const [nextId, setNextId] = useState(1);
 
   const agregarInvitado = () => {
-    if (invitadosExtras.length < 4) {
+    if (invitadosExtras.length < 2) {
       setInvitadosExtras([...invitadosExtras, { id: nextId, nombre: '' }]);
       setNextId(nextId + 1);
     }
@@ -90,7 +90,7 @@ export default function RSVP() {
           <div className="flex flex-col gap-4 mt-2">
             <AnimatePresence>
               {invitadosExtras.map((invitado, index) => (
-                <motion.div 
+                <motion.div
                   key={invitado.id}
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
@@ -101,8 +101,8 @@ export default function RSVP() {
                     <label className="text-[0.875rem] font-semibold text-[#44483f]" htmlFor={`invitado-${invitado.id}`}>
                       Invitado adicional {index + 1} (Opcional)
                     </label>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => removerInvitado(invitado.id)}
                       className="text-[#8a8d86] hover:text-[#b35c44] transition-colors p-1"
                       aria-label="Eliminar invitado"
@@ -123,14 +123,14 @@ export default function RSVP() {
               ))}
             </AnimatePresence>
 
-            {invitadosExtras.length < 4 && (
-              <button 
+            {invitadosExtras.length < 2 && (
+              <button
                 onClick={agregarInvitado}
-                className="flex items-center gap-2 text-primary font-serif italic hover:opacity-80 transition-opacity w-fit mt-1" 
+                className="flex items-center gap-2 text-primary font-serif italic hover:opacity-80 transition-opacity w-fit mt-1"
                 type="button"
               >
                 <PlusCircle size={20} strokeWidth={1.5} />
-                + Agregar invitado {invitadosExtras.length > 0 && `(${invitadosExtras.length}/4)`}
+                Agregar invitado {invitadosExtras.length > 0 && `(${invitadosExtras.length}/max 2)`}
               </button>
             )}
           </div>
