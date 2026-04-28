@@ -37,10 +37,25 @@ export default function Preloader({ onLoaded }: { onLoaded: () => void }) {
 
     // Preload video
     const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
     video.preload = 'auto';
+    
+    let videoResolved = false;
+    const resolveVideo = () => {
+      if (!videoResolved) {
+        videoResolved = true;
+        checkDone();
+      }
+    };
+
+    video.oncanplaythrough = resolveVideo;
+    video.onloadeddata = resolveVideo;
+    video.onerror = resolveVideo;
     video.src = VIDEO_TO_PRELOAD;
-    video.oncanplaythrough = checkDone;
-    video.onerror = checkDone;
+
+    // Fallback de seguridad para iOS (Ahorro de batería bloquea el preload)
+    setTimeout(resolveVideo, 3000);
   }, [onLoaded]);
 
   return (
