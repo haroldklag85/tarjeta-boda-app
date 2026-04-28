@@ -222,6 +222,31 @@ export default function Location() {
         <h2 className="text-[1.75rem] font-serif text-[#2C3525] text-center mb-4 uppercase tracking-wider">Pronóstico</h2>
         <WeatherCard />
       </motion.section>
+
+      {/* Polaroid Photo - Mis papis */}
+      <motion.div
+        className="mt-8 mb-4 flex flex-col items-center"
+        initial={{ opacity: 0, y: 30, rotate: 0 }}
+        animate={{ opacity: 1, y: 0, rotate: -2.5 }}
+        transition={{ duration: 1, delay: 1.3 }}
+      >
+        <div className="relative bg-white p-3 pb-14 rounded-sm shadow-[0_8px_30px_rgba(44,53,37,0.12)] border border-[#D1C4B0]">
+          <div className="w-56 h-64 overflow-hidden rounded-sm">
+            <img
+              alt="Bienvenidos"
+              className="w-full h-full object-cover"
+              src="/fotoTres.jpeg"
+            />
+          </div>
+          {/* Handwritten caption */}
+          <p
+            className="absolute bottom-3 left-0 right-0 text-center text-[0.85rem] text-[#44483f] italic leading-tight px-2"
+            style={{ fontFamily: '"Noto Serif", serif' }}
+          >
+            Bienvenidos al matrimonio<br/>de mis papis...
+          </p>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
