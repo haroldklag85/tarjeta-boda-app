@@ -373,7 +373,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
           {/* Hint text */}
           {phase === 'sealed' && videoReady && (
             <motion.p
-              className="absolute left-0 right-0 text-center text-[12px] md:text-[14px] text-white/90 font-sans tracking-[0.2em] uppercase font-bold"
+              className="absolute left-0 right-0 text-center text-[12px] md:text-[14px] text-[#2C3525] font-sans tracking-[0.2em] uppercase font-bold"
               style={{ bottom: '10%' }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -461,10 +461,10 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1, duration: 0.6 }}
               >
-                <p className="text-[10px] text-white/80 font-sans tracking-[0.2em] uppercase drop-shadow-md">
+                <p className="text-[10px] text-[#2C3525] font-bold font-sans tracking-[0.2em] uppercase">
                   Toca para acercar 🔍
                 </p>
-                <p className="text-[10px] text-white/80 font-sans tracking-[0.2em] uppercase drop-shadow-md">
+                <p className="text-[10px] text-[#2C3525] font-bold font-sans tracking-[0.2em] uppercase">
                   ↑ Desliza hacia arriba
                 </p>
               </motion.div>
@@ -472,7 +472,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
 
             {isZoomed && (
               <motion.p
-                className="absolute left-0 right-0 text-center text-[7px] text-white font-sans tracking-[0.2em] uppercase drop-shadow-md pointer-events-none"
+                className="absolute left-0 right-0 text-center text-[8px] text-[#2C3525] font-bold font-sans tracking-[0.2em] uppercase pointer-events-none"
                 style={{ bottom: '28%' }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
