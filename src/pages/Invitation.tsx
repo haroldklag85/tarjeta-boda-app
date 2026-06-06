@@ -1,8 +1,22 @@
 import { motion } from 'framer-motion';
 import { useCountdown } from '../hooks/useCountdown';
+import { useState, useEffect } from 'react';
 
 export default function Invitation() {
   const timeLeft = useCountdown('2026-11-27T00:00:00');
+  const [customMessage, setCustomMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadCustomMessage = () => {
+      const msg = localStorage.getItem('invitation_custom_message');
+      setCustomMessage(msg);
+    };
+
+    loadCustomMessage();
+
+    window.addEventListener('invitation_loaded', loadCustomMessage);
+    return () => window.removeEventListener('invitation_loaded', loadCustomMessage);
+  }, []);
 
   return (
     <>
@@ -37,9 +51,17 @@ export default function Invitation() {
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.4 }}
         >
-          <p className="text-primary italic font-serif leading-[1.8]">La magia de la conexión, la suerte de coincidir, el esfuerzo de permanecer y la bendición de ser un nosotros.</p>
-          <p className="text-primary italic font-serif leading-[1.8]">Con el corazón lleno de amor y alegría, queremos invitarlos a acompañarnos en el día en que celebraremos nuestra unión.</p>
-          <p className="text-primary italic font-serif leading-[1.8]">Será un momento íntimo y especial, y nos hará muy felices compartirlo con las personas que han sido parte de nuestra historia.</p>
+          {customMessage ? (
+            <p className="text-primary italic font-serif leading-[1.8] whitespace-pre-line text-lg px-4">
+              {customMessage}
+            </p>
+          ) : (
+            <>
+              <p className="text-primary italic font-serif leading-[1.8]">La magia de la conexión, la suerte de coincidir, el esfuerzo de permanecer y la bendición de ser un nosotros.</p>
+              <p className="text-primary italic font-serif leading-[1.8]">Con el corazón lleno de amor y alegría, queremos invitarlos a acompañarnos en el día en que celebraremos nuestra unión.</p>
+              <p className="text-primary italic font-serif leading-[1.8]">Será un momento íntimo y especial, y nos hará muy felices compartirlo con las personas que han sido parte de nuestra historia.</p>
+            </>
+          )}
         </motion.div>
 
         {/* Prominent Text Addition */}

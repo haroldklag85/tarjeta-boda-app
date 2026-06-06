@@ -12,6 +12,7 @@ import AdminPanel from './pages/AdminPanel';
 import DesktopBlocker from './components/DesktopBlocker';
 import { useIsDesktop } from './hooks/useIsDesktop';
 import ScrollToTop from './components/ScrollToTop';
+import { supabase } from './utils/supabase';
 
 export default function App() {
   const [isEnvelopeOpen, setIsEnvelopeOpen] = useState(false);
@@ -20,7 +21,7 @@ export default function App() {
   const isDesktop = useIsDesktop(1024);
   const isAdminRoute = window.location.pathname.includes('/admin-panel');
 
-  // Capture invitation code from URL query or path parameter
+  // Capture invitation code from URL query or path parameter and pre-fetch details
   useEffect(() => {
     if (isAdminRoute) return;
 
@@ -36,7 +37,41 @@ export default function App() {
     }
 
     if (code) {
-      localStorage.setItem('invitation_code', code.toUpperCase());
+      const upperCode = code.toUpperCase();
+      localStorage.setItem('invitation_code', upperCode);
+      
+      const fetchDetails = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('invitations')
+            .select('group_name, custom_message')
+            .eq('code', upperCode)
+            .single();
+
+          if (error) throw error;
+          if (data) {
+            localStorage.setItem('invitation_group_name', data.group_name);
+            if (data.custom_message) {
+              localStorage.setItem('invitation_custom_message', data.custom_message);
+            } else {
+              localStorage.removeItem('invitation_custom_message');
+            }
+          }
+        } catch (err) {
+          console.error('Error pre-fetching invitation details:', err);
+          localStorage.setItem('invitation_group_name', 'Familia y Amigos');
+          localStorage.removeItem('invitation_custom_message');
+        } finally {
+          // Trigger a custom event to notify components that details are loaded
+          window.dispatchEvent(new Event('invitation_loaded'));
+        }
+      };
+
+      fetchDetails();
+    } else {
+      localStorage.setItem('invitation_group_name', 'Familia y Amigos');
+      localStorage.removeItem('invitation_custom_message');
+      window.dispatchEvent(new Event('invitation_loaded'));
     }
   }, [isAdminRoute]);
 
