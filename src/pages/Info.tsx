@@ -94,7 +94,7 @@ export default function Info() {
             <div className="bg-white rounded-xl p-6 shadow-[0_4px_20px_rgba(44,53,37,0.05)] w-full border border-[#D1C4B0]/20">
               <h3 className="text-[1.25rem] font-serif text-[#2C3525] mb-2">Puntualidad</h3>
               <p className="text-[1rem] text-[#44483f]">
-                La ceremonia comenzará puntualmente a las 14:00 hrs. Agradecemos su llegada con anticipación para tomar sus lugares con calma y disfrutar de la bienvenida.
+                La ceremonia comenzará puntualmente a las 16:30 hrs. Agradecemos su llegada con anticipación para tomar sus lugares con calma y disfrutar de la bienvenida.
               </p>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function Info() {
             <div className="bg-white rounded-xl p-6 shadow-[0_4px_20px_rgba(44,53,37,0.05)] w-full border border-[#D1C4B0]/20">
               <h3 className="text-[1.25rem] font-serif text-[#2C3525] mb-2">Australian Bar</h3>
               <p className="text-[1rem] text-[#44483f]">
-                Inspirados en la tradición de las bodas australianas, queremos brindar y celebrar con ustedes. Cada mesa contará con dos botellas de cortesía para iniciar la fiesta. Luego, quienes deseen seguir disfrutando de otras bebidas, podrán encontrarlas en nuestra barra disponible para compra durante toda la celebración.
+                Inspirados en la tradición de las bodas australianas, queremos brindar y celebrar con ustedes. Cada mesa contará con dos botellas para iniciar la fiesta. Luego, quienes deseen seguir disfrutando de otras bebidas, podrán encontrarlas en nuestra barra disponible para compra durante toda la celebración.
               </p>
             </div>
           </div>
