@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import SealFragments from './SealFragments';
 import GlobalAudio from '../utils/audio';
+import { supabase } from '../utils/supabase';
 
 interface LayeredEnvelopeProps {
   onOpenComplete: () => void;
@@ -44,13 +45,36 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
   const typewriterIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cardControls = useAnimation();
 
-  // ══════════════════════════════════════════════════════════════
-  // TODO [BACKEND]: Reemplazar este nombre mock por el nombre real
-  // del invitado obtenido de la base de datos (Supabase).
-  // El valor debe venir como prop o desde un contexto/hook.
-  // Ej: const guestName = useGuestName(invitationId);
-  // ══════════════════════════════════════════════════════════════
-  const GUEST_NAME_MOCK = 'Señor y Señora\nPipito Pérez e Hijos';
+  const [guestName, setGuestName] = useState('Señor y Señora\nPipito Pérez e Hijos');
+
+  // Fetch guest name from Supabase using the invitation code
+  useEffect(() => {
+    const fetchGuestName = async () => {
+      const code = localStorage.getItem('invitation_code');
+      if (!code) {
+        setGuestName('Familia y Amigos');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('invitations')
+          .select('group_name')
+          .eq('code', code)
+          .single();
+
+        if (error) throw error;
+        if (data && data.group_name) {
+          setGuestName(data.group_name);
+        }
+      } catch (err) {
+        console.error('Error fetching invitation group name:', err);
+        setGuestName('Familia y Amigos');
+      }
+    };
+
+    fetchGuestName();
+  }, []);
 
   // On mount: seek video to the first good frame
   useEffect(() => {
@@ -80,7 +104,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
   useEffect(() => {
     if (envelopeTextVisible) {
       let i = 0;
-      const fullText = GUEST_NAME_MOCK.replace(/\n/g, '\n');
+      const fullText = guestName.replace(/\n/g, '\n');
       setTypewriterText('');
       const charDelay = 1500 / fullText.length; // ~1.5s to type entire text (fast)
       const interval = setInterval(() => {
