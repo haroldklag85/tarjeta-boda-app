@@ -56,19 +56,6 @@ export default function Invitation() {
           <p className="text-primary italic font-serif leading-[1.8]">Será un momento íntimo y especial, y nos hará muy felices compartirlo con las personas que han sido parte de nuestra historia.</p>
         </motion.div>
 
-        {/* Teaser for the surprise custom message */}
-        {customMessage && (
-          <motion.div
-            className="text-center mb-12 px-6 py-4 rounded-xl bg-[#C49550]/5 border border-[#C49550]/20 max-w-sm mx-auto shadow-sm"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-          >
-            <p className="text-[#C49550] font-serif italic text-sm leading-relaxed animate-pulse">
-              💌 Te hemos dejado una carta personal... Confírmanos tu asistencia en la sección de "Asistencia" para poder leerla.
-            </p>
-          </motion.div>
-        )}
 
         {/* Prominent Text Addition */}
         <motion.p 
@@ -163,6 +150,18 @@ export default function Invitation() {
             </p>
           </div>
         </motion.div>
+
+        {/* Subtle Teaser for the surprise custom message */}
+        {customMessage && (
+          <motion.p
+            className="text-xs text-[#8a8d86] font-serif italic mt-6 text-center leading-relaxed max-w-[280px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.5, duration: 1 }}
+          >
+            Te hemos dejado una nota personal que podrás leer al confirmar tu asistencia en la sección de "Asistencia".
+          </motion.p>
+        )}
       </motion.div>
     </>
   );
