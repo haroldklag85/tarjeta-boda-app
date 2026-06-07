@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Church, Wine, Utensils, PartyPopper, Shirt, MapPin, Navigation, X } from 'lucide-react';
+import { Church, Wine, Utensils, PartyPopper, Shirt, MapPin, Navigation, X, Heart } from 'lucide-react';
 import { useState } from 'react';
 import WeatherCard from '../components/WeatherCard';
 
@@ -87,7 +87,21 @@ export default function Location() {
             </div>
           </div>
 
-          {/* Event 2: Cóctel */}
+          {/* Event 2: Ritual de Amor */}
+          <div className="flex flex-col md:flex-row gap-6 items-start group">
+            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#e7f2da] flex items-center justify-center border border-[#D1C4B0] relative z-10 shadow-sm">
+              <Heart className="text-primary" size={20} strokeWidth={1.5} />
+            </div>
+            <div className="bg-white rounded-xl p-6 border border-[#D1C4B0]/40 w-full shadow-sm hover:bg-[#e7f2da]/30 transition-colors duration-300">
+              <div className="flex justify-between items-start sm:items-baseline gap-4 mb-2">
+                <h3 className="text-xl font-serif text-[#2C3525]">Ritual de Amor</h3>
+                <span className="text-sm font-semibold text-[#566247] flex-shrink-0 mt-1 sm:mt-0">17:15 hrs</span>
+              </div>
+              <p className="text-[#44483f] leading-relaxed">Un espacio creado para vivir el amor como símbolo, rito y promesa, en un momento que tocará nuestros corazones.</p>
+            </div>
+          </div>
+
+          {/* Event 3: Cóctel */}
           <div className="flex flex-col md:flex-row gap-6 items-start group">
             <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#e7f2da] flex items-center justify-center border border-[#D1C4B0] relative z-10 shadow-sm">
               <Wine className="text-primary" size={20} strokeWidth={1.5} />
@@ -95,27 +109,27 @@ export default function Location() {
             <div className="bg-white rounded-xl p-6 border border-[#D1C4B0]/40 w-full shadow-sm hover:bg-[#e7f2da]/30 transition-colors duration-300">
               <div className="flex justify-between items-start sm:items-baseline gap-4 mb-2">
                 <h3 className="text-xl font-serif text-[#2C3525]">Cóctel de Bienvenida</h3>
-                <span className="text-sm font-semibold text-[#566247] flex-shrink-0 mt-1 sm:mt-0">17:30 hrs</span>
+                <span className="text-sm font-semibold text-[#566247] flex-shrink-0 mt-1 sm:mt-0">18:30 hrs</span>
               </div>
               <p className="text-[#44483f]">Jardín Principal de la Hacienda. Disfruta de bebidas frescas y bocadillos mientras llegan los novios.</p>
             </div>
           </div>
 
-          {/* Event 3: Banquete */}
+          {/* Event 4: Ingreso al Salón */}
           <div className="flex flex-col md:flex-row gap-6 items-start group">
             <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#e7f2da] flex items-center justify-center border border-[#D1C4B0] relative z-10 shadow-sm">
               <Utensils className="text-primary" size={20} strokeWidth={1.5} />
             </div>
             <div className="bg-white rounded-xl p-6 border border-[#D1C4B0]/40 w-full shadow-sm hover:bg-[#e7f2da]/30 transition-colors duration-300">
               <div className="flex justify-between items-start sm:items-baseline gap-4 mb-2">
-                <h3 className="text-xl font-serif text-[#2C3525]">Banquete</h3>
-                <span className="text-sm font-semibold text-[#566247] flex-shrink-0 mt-1 sm:mt-0">19:00 hrs</span>
+                <h3 className="text-xl font-serif text-[#2C3525]">Ingreso al Salón</h3>
+                <span className="text-sm font-semibold text-[#566247] flex-shrink-0 mt-1 sm:mt-0">19:30 hrs</span>
               </div>
-              <p className="text-[#44483f]">Cena de tres tiempos servida en el Salón Terraza. Favor de ubicar su mesa en el seating plan.</p>
+              <p className="text-[#44483f] leading-relaxed">Después de una ceremonia llena de símbolos y amor, daremos inicio a una noche para celebrar nuestra historia. Entraremos juntos al salón, brindaremos por esta nueva etapa, compartiremos la cena con quienes amamos, escucharemos palabras del corazón, viviremos nuestro primer baile y guardaremos en fotografías la alegría de tenerlos cerca en este día tan especial.</p>
             </div>
           </div>
 
-          {/* Event 4: Fiesta */}
+          {/* Event 5: Fiesta */}
           <div className="flex flex-col md:flex-row gap-6 items-start group">
             <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#e7f2da] flex items-center justify-center border border-[#D1C4B0] relative z-10 shadow-sm">
               <PartyPopper className="text-primary" size={20} strokeWidth={1.5} />
@@ -125,12 +139,22 @@ export default function Location() {
                 <h3 className="text-xl font-serif text-[#2C3525]">Fiesta</h3>
                 <span className="text-sm font-semibold text-[#566247] flex-shrink-0 mt-1 sm:mt-0">21:00 hrs</span>
               </div>
-              <p className="text-[#44483f]">¡A celebrar! Música en vivo, baile y barra libre hasta el amanecer.</p>
+              <p className="text-[#44483f] leading-relaxed">Y cuando la noche nos encuentre juntos, celebraremos con una hora loca inspirada en la alegría del San Pedro huilense. Bailaremos como en esa fiesta soñada, volveremos a ser compinches entre canciones de nuestra juventud y dejaremos el corazón en la pista, rodeados de quienes hacen más feliz nuestra historia.</p>
             </div>
           </div>
 
         </div>
       </motion.section>
+
+      {/* Reception Closing Message */}
+      <motion.div 
+        className="text-center max-w-lg mx-auto -mt-4 px-4"
+        variants={itemVariants}
+      >
+        <p className="text-primary italic font-serif leading-[1.8] text-[1.05rem]">
+          "Cerraremos esta noche con el corazón lleno de gratitud, guardando cada abrazo, sonrisa y momento compartido como parte de nuestra historia."
+        </p>
+      </motion.div>
 
       {/* Dress Code Section */}
       <motion.section className="w-full relative overflow-hidden rounded-xl bg-[#edf7df] border border-[#D1C4B0]/40 p-8 sm:p-12 text-center flex flex-col items-center justify-center shadow-sm" variants={itemVariants}>
