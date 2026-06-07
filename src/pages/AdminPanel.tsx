@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
-import { Users, CheckCircle, XCircle, Download, Search, RefreshCw, Key, Check, MessageSquare, Link, FileText, Send } from 'lucide-react';
+import { Users, CheckCircle, XCircle, Download, Search, RefreshCw, Key, Check, MessageSquare, Link, FileText, Send, AlertTriangle, Music, Heart } from 'lucide-react';
 
 interface RSVPRecord {
   id: string;
@@ -31,7 +31,7 @@ interface InvitationRecord {
 
 export default function AdminPanel() {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<'rsvps' | 'links'>('rsvps');
+  const [activeTab, setActiveTab] = useState<'rsvps' | 'links' | 'special'>('rsvps');
   const [loading, setLoading] = useState(true);
   const [rsvps, setRsvps] = useState<RSVPRecord[]>([]);
   const [invitations, setInvitations] = useState<InvitationRecord[]>([]);
@@ -43,12 +43,16 @@ export default function AdminPanel() {
   // Search terms
   const [rsvpSearch, setRsvpSearch] = useState('');
   const [linkSearch, setLinkSearch] = useState('');
+  const [specialSearch, setSpecialSearch] = useState('');
   
   const [stats, setStats] = useState({
     totalInvitations: 0,
     totalAttending: 0,
     totalNotAttending: 0,
     totalExtraGuests: 0,
+    totalAllergies: 0,
+    totalSongs: 0,
+    totalWishes: 0,
   });
 
   const secretKey = import.meta.env.VITE_ADMIN_SECRET_KEY || '$oYanayharold2026';
@@ -116,6 +120,9 @@ export default function AdminPanel() {
       let attendingCount = 0;
       let notAttendingCount = 0;
       let extraCount = 0;
+      let allergiesCount = 0;
+      let songsCount = 0;
+      let wishesCount = 0;
 
       rsvpRecords.forEach(r => {
         if (r.is_attending) {
@@ -126,6 +133,16 @@ export default function AdminPanel() {
         } else {
           notAttendingCount++;
         }
+
+        if (r.allergies && r.allergies.trim().length > 0 && r.allergies.toLowerCase() !== 'ninguna' && r.allergies.toLowerCase() !== 'ninguno') {
+          allergiesCount++;
+        }
+        if (r.song_suggestion && r.song_suggestion.trim().length > 0) {
+          songsCount++;
+        }
+        if (r.wish && r.wish.trim().length > 0) {
+          wishesCount++;
+        }
       });
 
       setStats({
@@ -133,6 +150,9 @@ export default function AdminPanel() {
         totalAttending: attendingCount,
         totalNotAttending: notAttendingCount,
         totalExtraGuests: extraCount,
+        totalAllergies: allergiesCount,
+        totalSongs: songsCount,
+        totalWishes: wishesCount,
       });
 
       // 2. Fetch all Invitations
@@ -254,6 +274,35 @@ export default function AdminPanel() {
     triggerDownload(csvContent, `enlaces_whatsapp_boda_${new Date().toISOString().split('T')[0]}.csv`);
   };
 
+  const exportSpecialDetails = () => {
+    if (rsvps.length === 0) return;
+
+    const headers = [
+      'Nombre Invitado',
+      'Invitación / Grupo',
+      '¿Asiste?',
+      'Alergias / Restricciones',
+      'Canción Sugerida',
+      'Deseo / Mensaje'
+    ];
+
+    const rows = rsvps.map(r => [
+      r.name,
+      r.invitations?.group_name || 'N/A',
+      r.is_attending ? 'SÍ' : 'NO',
+      r.allergies || 'Ninguna',
+      r.song_suggestion || 'Ninguna',
+      r.wish || ''
+    ]);
+
+    const csvContent = '\uFEFF' + [
+      headers.join(';'),
+      ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(';'))
+    ].join('\n');
+
+    triggerDownload(csvContent, `detalles_especiales_boda_${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
   const triggerDownload = (content: string, filename: string) => {
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -280,6 +329,17 @@ export default function AdminPanel() {
       i.group_name.toLowerCase().includes(term) ||
       i.code.includes(term) ||
       (i.custom_message && i.custom_message.toLowerCase().includes(term))
+    );
+  });
+
+  const filteredSpecial = rsvps.filter(r => {
+    const term = specialSearch.toLowerCase();
+    return (
+      r.name.toLowerCase().includes(term) ||
+      (r.invitations?.group_name && r.invitations.group_name.toLowerCase().includes(term)) ||
+      (r.allergies && r.allergies.toLowerCase().includes(term)) ||
+      (r.song_suggestion && r.song_suggestion.toLowerCase().includes(term)) ||
+      (r.wish && r.wish.toLowerCase().includes(term))
     );
   });
 
@@ -337,19 +397,21 @@ export default function AdminPanel() {
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Actualizar
             </button>
-            <button
-              onClick={activeTab === 'rsvps' ? exportRsvps : exportLinks}
-              disabled={loading || (activeTab === 'rsvps' ? rsvps.length === 0 : invitations.length === 0)}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded hover:bg-[#384c2b] transition-colors text-sm font-semibold shadow-sm disabled:opacity-50"
-            >
-              <Download className="h-4 w-4" />
-              {activeTab === 'rsvps' ? 'Descargar Excel RSVP' : 'Descargar Excel Enlaces'}
-            </button>
+            {activeTab !== 'special' && (
+              <button
+                onClick={activeTab === 'rsvps' ? exportRsvps : exportLinks}
+                disabled={loading || (activeTab === 'rsvps' ? rsvps.length === 0 : invitations.length === 0)}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded hover:bg-[#384c2b] transition-colors text-sm font-semibold shadow-sm disabled:opacity-50"
+              >
+                <Download className="h-4 w-4" />
+                {activeTab === 'rsvps' ? 'Descargar Excel RSVP' : 'Descargar Excel Enlaces'}
+              </button>
+            )}
           </div>
         </div>
 
         {/* Tab Selection */}
-        <div className="flex border-b border-[#D1C4B0]/30 mb-8 gap-6">
+        <div className="flex border-b border-[#D1C4B0]/30 mb-8 gap-6 overflow-x-auto whitespace-nowrap">
           <button
             onClick={() => setActiveTab('rsvps')}
             className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'rsvps' ? 'border-primary text-primary' : 'border-transparent text-[#8a8d86] hover:text-[#2C3525]'}`}
@@ -362,10 +424,16 @@ export default function AdminPanel() {
           >
             Enlaces de WhatsApp (Invitaciones)
           </button>
+          <button
+            onClick={() => setActiveTab('special')}
+            className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'special' ? 'border-primary text-primary' : 'border-transparent text-[#8a8d86] hover:text-[#2C3525]'}`}
+          >
+            Detalles de Invitados (Especiales)
+          </button>
         </div>
 
         {/* Dynamic Panel Contents */}
-        {activeTab === 'rsvps' ? (
+        {activeTab === 'rsvps' && (
           <>
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -504,8 +572,9 @@ export default function AdminPanel() {
               )}
             </div>
           </>
-        ) : (
-          /* TAB 2: Invitations list & WhatsApp Link Generator */
+        )}
+
+        {activeTab === 'links' && (
           <div className="flex flex-col gap-6">
             {/* Quick Guide and CSV Template Download */}
             <div className="bg-white rounded-xl border border-[#D1C4B0]/40 shadow-sm p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -635,6 +704,129 @@ export default function AdminPanel() {
                                   <Send size={14} />
                                 </a>
                               </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'special' && (
+          <div className="flex flex-col gap-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+              <div className="bg-white p-5 rounded-xl border border-[#D1C4B0]/40 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">Alergias Reportadas</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-2xl font-bold text-[#b35c44]">{stats.totalAllergies}</span>
+                  <AlertTriangle className="h-5 w-5 text-[#b35c44] opacity-80" />
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-xl border border-[#D1C4B0]/40 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">Canciones Sugeridas</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-2xl font-bold text-primary">{stats.totalSongs}</span>
+                  <Music className="h-5 w-5 text-primary opacity-80" />
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-xl border border-[#D1C4B0]/40 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">Deseos Recibidos</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-2xl font-bold text-[#C49550]">{stats.totalWishes}</span>
+                  <Heart className="h-5 w-5 text-[#C49550] opacity-80" />
+                </div>
+              </div>
+            </div>
+
+            {/* Card wrapper */}
+            <div className="bg-white rounded-xl border border-[#D1C4B0]/40 shadow-sm overflow-hidden">
+              {/* Header with Search and Export button */}
+              <div className="p-4 border-b border-[#D1C4B0]/30 bg-[#FBFBFA] flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="relative w-full max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a8d86] h-4 w-4" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre, alergia, canción o deseo..."
+                    value={specialSearch}
+                    onChange={e => setSpecialSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-[#D1C4B0] rounded focus:ring-0 focus:border-primary placeholder-[#c4c8bc] transition-colors"
+                  />
+                </div>
+                <button
+                  onClick={exportSpecialDetails}
+                  disabled={loading || rsvps.length === 0}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded hover:bg-[#384c2b] transition-colors text-sm font-semibold shadow-sm disabled:opacity-50"
+                >
+                  <Download className="h-4 w-4" />
+                  Descargar Especiales CSV
+                </button>
+              </div>
+
+              {loading ? (
+                <div className="py-20 text-center text-[#8a8d86]">
+                  <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
+                  Cargando detalles especiales...
+                </div>
+              ) : filteredSpecial.length === 0 ? (
+                <div className="py-20 text-center text-[#8a8d86]">
+                  No se encontraron detalles especiales.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-[#FBFBFA] border-b border-[#D1C4B0]/30 text-xs font-semibold text-[#566247] uppercase tracking-wider">
+                        <th className="p-4">Grupo / Código</th>
+                        <th className="p-4">Nombre Confirmado / Celular</th>
+                        <th className="p-4">¿Asiste?</th>
+                        <th className="p-4">Alergias / Restricciones</th>
+                        <th className="p-4">Canción Sugerida</th>
+                        <th className="p-4">Mensaje / Deseo</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#D1C4B0]/20 text-[#44483f]">
+                      {filteredSpecial.map((r) => {
+                        const hasAllergy = r.allergies && r.allergies.trim().length > 0 && r.allergies.toLowerCase() !== 'ninguna' && r.allergies.toLowerCase() !== 'ninguno';
+
+                        return (
+                          <tr key={r.id} className="hover:bg-[#FDFDFD] transition-colors">
+                            <td className="p-4 font-medium text-[#2C3525]">
+                              <div>{r.invitations?.group_name || 'N/A'}</div>
+                              <div className="text-[10px] text-[#8a8d86] uppercase tracking-wider font-sans font-semibold mt-0.5">
+                                Cód: {r.invitations?.code || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="font-semibold text-[#2C3525]">{r.name}</div>
+                              <div className="text-xs text-[#8a8d86] font-mono">{r.phone}</div>
+                            </td>
+                            <td className="p-4">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-bold ${r.is_attending ? 'bg-[#e7f2da] text-primary' : 'bg-[#b35c44]/10 text-[#b35c44]'}`}>
+                                {r.is_attending ? 'SÍ' : 'NO'}
+                              </span>
+                            </td>
+                            <td className={`p-4 max-w-[180px] truncate ${hasAllergy ? 'text-[#b35c44] font-semibold' : ''}`} title={r.allergies}>
+                              {r.allergies && r.allergies.trim().length > 0 ? r.allergies : <span className="text-[#c4c8bc] italic">Ninguna</span>}
+                            </td>
+                            <td className="p-4 max-w-[180px] truncate" title={r.song_suggestion || ''}>
+                              {r.song_suggestion && r.song_suggestion.trim().length > 0 ? (
+                                <span className="flex items-center gap-1">
+                                  <Music size={12} className="text-primary/70 flex-shrink-0" />
+                                  {r.song_suggestion}
+                                </span>
+                              ) : (
+                                <span className="text-[#c4c8bc] italic">-</span>
+                              )}
+                            </td>
+                            <td className="p-4 max-w-[250px] truncate italic text-xs" title={r.wish}>
+                              {r.wish && r.wish.trim().length > 0 ? `"${r.wish}"` : <span className="text-[#c4c8bc] italic">-</span>}
                             </td>
                           </tr>
                         );

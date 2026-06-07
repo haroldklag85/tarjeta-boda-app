@@ -60,7 +60,6 @@ export default function RSVP() {
         
         if (invData) {
           setInvitation(invData);
-          setNombre(invData.group_name); // Pre-populate name with group name
           
           const msg = localStorage.getItem('invitation_custom_message');
           setCustomMessage(msg);

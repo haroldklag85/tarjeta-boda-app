@@ -9,6 +9,7 @@ class GlobalAudio {
       // Initialize the audio instance
       this.instance = new Audio('/musica.mpeg');
       this.instance.loop = true; // Typically you want background music to loop
+      this.instance.volume = 0.2; // Set volume to a softer 20% background level
     }
 
     if (!this.initialized) {

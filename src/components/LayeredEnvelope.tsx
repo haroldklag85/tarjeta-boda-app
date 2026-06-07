@@ -31,6 +31,17 @@ interface LayeredEnvelopeProps {
 // Time in the video where the first usable frame is (after black fade)
 const VIDEO_START_TIME = 0.35;
 
+const getDynamicFontSize = (name: string) => {
+  const len = name.length;
+  if (len <= 20) {
+    return 'clamp(12px, 3.2vw, 15px)';
+  } else if (len <= 35) {
+    return 'clamp(10px, 2.8vw, 13px)';
+  } else {
+    return 'clamp(9px, 2.5vw, 11px)';
+  }
+};
+
 type Phase = 'sealed' | 'breaking' | 'playing' | 'open' | 'pulling';
 
 export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps) {
@@ -40,6 +51,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
   const [envelopeTextVisible, setEnvelopeTextVisible] = useState(false);
   const [typewriterText, setTypewriterText] = useState('');
   const [isZoomed, setIsZoomed] = useState(false);
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const typewriterIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cardControls = useAnimation();
@@ -91,14 +103,17 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
   useEffect(() => {
     if (envelopeTextVisible) {
       let i = 0;
-      const fullText = guestName.replace(/\n/g, '\n');
+      setIsTypingComplete(false);
+      const prefix = "Con mucho cariño para:\n";
+      const fullText = prefix + guestName;
       setTypewriterText('');
-      const charDelay = 1500 / fullText.length; // ~1.5s to type entire text (fast)
+      const charDelay = 2500 / fullText.length; // ~2.5s to type entire text (more relaxed)
       const interval = setInterval(() => {
         i++;
         setTypewriterText(fullText.slice(0, i));
         if (i >= fullText.length) {
           clearInterval(interval);
+          setIsTypingComplete(true);
         }
       }, charDelay);
       typewriterIntervalRef.current = interval;
@@ -110,12 +125,13 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
       };
     } else {
       setTypewriterText('');
+      setIsTypingComplete(false);
       if (typewriterIntervalRef.current) {
         clearInterval(typewriterIntervalRef.current);
         typewriterIntervalRef.current = null;
       }
     }
-  }, [envelopeTextVisible]);
+  }, [envelopeTextVisible, guestName]);
 
   // Video timeupdate — controls when the guest name text is visible
   const handleTimeUpdate = useCallback(() => {
@@ -253,9 +269,9 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
         <motion.div
           className="absolute pointer-events-none"
           style={{
-            top: '46%',
-            left: '48%',
-            transform: 'translate(-50%, -50%) rotate(15deg)',
+            top: '47%',
+            left: '54%',
+            transform: 'translate(-50%, -50%) rotate(13.8deg)',
             zIndex: 4,
             width: 'min(42vw, 170px)',
           }}
@@ -264,11 +280,11 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <p
+          <div
             className="text-center leading-tight"
             style={{
               color: '#514e3a',
-              fontSize: 'clamp(11px, 3vw, 15px)',
+              fontSize: getDynamicFontSize(guestName),
               fontFamily: '"Noto Serif", serif',
               whiteSpace: 'pre-line',
               textShadow: 'none',
@@ -277,16 +293,38 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
               mixBlendMode: 'multiply',
             }}
           >
-            {typewriterText}
-            <motion.span
-              className="inline-block ml-[1px]"
-              style={{ color: '#44483f' }}
-              animate={{ opacity: [1, 0] }}
-              transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
-            >
-              |
-            </motion.span>
-          </p>
+            {(() => {
+              const prefixStr = "Con mucho cariño para:\n";
+              let prefixPart = "";
+              let namePart = "";
+              if (typewriterText.length <= prefixStr.length) {
+                prefixPart = typewriterText;
+              } else {
+                prefixPart = prefixStr;
+                namePart = typewriterText.slice(prefixStr.length);
+              }
+              return (
+                <>
+                  <span style={{ fontSize: '0.85em', fontStyle: 'italic', opacity: 0.85 }}>
+                    {prefixPart}
+                  </span>
+                  <span style={{ fontWeight: 600 }}>
+                    {namePart}
+                  </span>
+                </>
+              );
+            })()}
+            {!isTypingComplete && (
+              <motion.span
+                className="inline-block ml-[1px]"
+                style={{ color: '#44483f' }}
+                animate={{ opacity: [1, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
+              >
+                |
+              </motion.span>
+            )}
+          </div>
         </motion.div>
       )}
 
