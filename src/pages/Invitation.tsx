@@ -51,18 +51,24 @@ export default function Invitation() {
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.4 }}
         >
-          {customMessage ? (
-            <p className="text-primary italic font-serif leading-[1.8] whitespace-pre-line text-lg px-4">
-              {customMessage}
-            </p>
-          ) : (
-            <>
-              <p className="text-primary italic font-serif leading-[1.8]">La magia de la conexión, la suerte de coincidir, el esfuerzo de permanecer y la bendición de ser un nosotros.</p>
-              <p className="text-primary italic font-serif leading-[1.8]">Con el corazón lleno de amor y alegría, queremos invitarlos a acompañarnos en el día en que celebraremos nuestra unión.</p>
-              <p className="text-primary italic font-serif leading-[1.8]">Será un momento íntimo y especial, y nos hará muy felices compartirlo con las personas que han sido parte de nuestra historia.</p>
-            </>
-          )}
+          <p className="text-primary italic font-serif leading-[1.8]">La magia de la conexión, la suerte de coincidir, el esfuerzo de permanecer y la bendición de ser un nosotros.</p>
+          <p className="text-primary italic font-serif leading-[1.8]">Con el corazón lleno de amor y alegría, queremos invitarlos a acompañarnos en el día en que celebraremos nuestra unión.</p>
+          <p className="text-primary italic font-serif leading-[1.8]">Será un momento íntimo y especial, y nos hará muy felices compartirlo con las personas que han sido parte de nuestra historia.</p>
         </motion.div>
+
+        {/* Teaser for the surprise custom message */}
+        {customMessage && (
+          <motion.div
+            className="text-center mb-12 px-6 py-4 rounded-xl bg-[#C49550]/5 border border-[#C49550]/20 max-w-sm mx-auto shadow-sm"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+          >
+            <p className="text-[#C49550] font-serif italic text-sm leading-relaxed animate-pulse">
+              💌 Te hemos dejado una carta personal... Confírmanos tu asistencia en la sección de "Asistencia" para poder leerla.
+            </p>
+          </motion.div>
+        )}
 
         {/* Prominent Text Addition */}
         <motion.p 

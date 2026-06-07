@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Gift, PlusCircle, ArrowRight, Leaf, X, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
+import NostalgicLetter from '../components/NostalgicLetter';
 
 export default function RSVP() {
   const [invitation, setInvitation] = useState<{ id: string; group_name: string; max_guests: number } | null>(null);
@@ -15,6 +16,8 @@ export default function RSVP() {
   const [musica, setMusica] = useState('');
   const [deseoText, setDeseoText] = useState('');
   const [invitadosExtras, setInvitadosExtras] = useState<{ id: number; nombre: string }[]>([]);
+  const [letterOpen, setLetterOpen] = useState(false);
+  const [customMessage, setCustomMessage] = useState<string | null>(null);
   
   // UX states
   const [nextId, setNextId] = useState(1);
@@ -58,6 +61,9 @@ export default function RSVP() {
         if (invData) {
           setInvitation(invData);
           setNombre(invData.group_name); // Pre-populate name with group name
+          
+          const msg = localStorage.getItem('invitation_custom_message');
+          setCustomMessage(msg);
 
           // 2. Fetch existing RSVP if any
           const { data: rsvpData, error: rsvpError } = await supabase
@@ -171,6 +177,9 @@ export default function RSVP() {
       }
 
       setSubmitSuccess(true);
+      if (customMessage) {
+        setLetterOpen(true);
+      }
     } catch (err) {
       console.error('Error saving RSVP:', err);
       setSubmitError('Hubo un problema de conexión al guardar tu respuesta. Por favor verifica tu conexión e intenta de nuevo.');
@@ -517,6 +526,16 @@ export default function RSVP() {
           </p>
         </div>
       </motion.div>
+
+      {/* 90s Nostalgic Letter Overlay */}
+      <AnimatePresence>
+        {letterOpen && customMessage && (
+          <NostalgicLetter
+            message={customMessage}
+            onClose={() => setLetterOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
