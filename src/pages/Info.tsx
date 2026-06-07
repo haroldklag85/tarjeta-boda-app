@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Shirt, Clock, Baby, Wine, Zap, Car } from 'lucide-react';
+import { Shirt, Clock, Baby, Wine, Car } from 'lucide-react';
 
 export default function Info() {
   const containerVariants = {
@@ -94,7 +94,7 @@ export default function Info() {
             <div className="bg-white rounded-xl p-6 shadow-[0_4px_20px_rgba(44,53,37,0.05)] w-full border border-[#D1C4B0]/20">
               <h3 className="text-[1.25rem] font-serif text-[#2C3525] mb-2">Puntualidad</h3>
               <p className="text-[1rem] text-[#44483f]">
-                La ceremonia comenzará puntualmente a las 16:30 hrs. Agradecemos su llegada con anticipación para tomar sus lugares con calma y disfrutar de la bienvenida.
+                La ceremonia comenzará puntualmente a las 16:00 hrs. Agradecemos su llegada con anticipación para tomar sus lugares con calma y disfrutar de la bienvenida.
               </p>
             </div>
           </div>
@@ -125,18 +125,6 @@ export default function Info() {
             </div>
           </div>
 
-          {/* Card 5: EV Charging */}
-          <div className="flex flex-col gap-3 items-center text-center">
-            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#e7f2da] flex items-center justify-center border border-[#D1C4B0] shadow-sm">
-              <Zap className="text-primary" size={20} strokeWidth={1.5} />
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-[0_4px_20px_rgba(44,53,37,0.05)] w-full border border-[#D1C4B0]/20">
-              <h3 className="text-[1.25rem] font-serif text-[#2C3525] mb-2">Carga Eléctrica</h3>
-              <p className="text-[1rem] text-[#44483f]">
-                Pensando en la comodidad de todos nuestros invitados, el estacionamiento del recinto cuenta con estaciones de carga disponibles para vehículos eléctricos.
-              </p>
-            </div>
-          </div>
 
           {/* Card 6: Designated Driver */}
           <div className="flex flex-col gap-3 items-center text-center">

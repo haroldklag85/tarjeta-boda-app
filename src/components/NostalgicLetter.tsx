@@ -71,9 +71,9 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
     if (!letterRef.current || downloading) return;
     
     setDownloading(true);
+    const actionButtons = letterRef.current.querySelector('.action-buttons') as HTMLElement;
+    
     try {
-      // Find and temporarily hide action buttons during capture
-      const actionButtons = letterRef.current.querySelector('.action-buttons') as HTMLElement;
       if (actionButtons) actionButtons.style.opacity = '0';
 
       const canvas = await html2canvas(letterRef.current, {
@@ -81,13 +81,50 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
         scale: 2, // 2x resolution is perfect for PDF performance
         backgroundColor: '#f5efe6',
         logging: false,
-        onclone: (clonedDoc) => {
-          // Hide action buttons in cloned doc
-          const clonedButtons = clonedDoc.querySelector('.action-buttons') as HTMLElement;
+        onclone: (clonedDoc, clonedLetter) => {
+          // 1. Hide action buttons in cloned doc
+          const clonedButtons = clonedLetter.querySelector('.action-buttons') as HTMLElement;
           if (clonedButtons) clonedButtons.style.display = 'none';
 
-          // Force US Letter aspect ratio and scaling on the cloned letter container
-          const clonedLetter = clonedDoc.querySelector('#nostalgic-letter-paper') as HTMLElement;
+          // 2. Sanitize oklch/oklab in all `<style>` elements to prevent html2canvas crashes
+          clonedDoc.querySelectorAll('style').forEach(styleTag => {
+            try {
+              let cssText = styleTag.innerHTML;
+              if (cssText.includes('oklch') || cssText.includes('oklab')) {
+                cssText = cssText.replace(/oklch\([^\)]*\)/g, '#566247');
+                cssText = cssText.replace(/oklab\([^\)]*\)/g, '#566247');
+                styleTag.innerHTML = cssText;
+              }
+            } catch (e) {
+              console.warn('Error sanitizing inline style tag:', e);
+            }
+          });
+
+          // 3. Fetch, sanitize, and convert all local `<link rel="stylesheet">` elements to `<style>` tags
+          clonedDoc.querySelectorAll('link[rel="stylesheet"]').forEach(linkTag => {
+            const href = (linkTag as HTMLLinkElement).href;
+            if (href && href.includes(window.location.origin)) {
+              try {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', href, false); // Synchronous request on cloned iframe context
+                xhr.send(null);
+                if (xhr.status === 200) {
+                  let cssText = xhr.responseText;
+                  cssText = cssText.replace(/oklch\([^\)]*\)/g, '#566247');
+                  cssText = cssText.replace(/oklab\([^\)]*\)/g, '#566247');
+                  
+                  const styleTag = clonedDoc.createElement('style');
+                  styleTag.innerHTML = cssText;
+                  clonedDoc.head.appendChild(styleTag);
+                  linkTag.remove();
+                }
+              } catch (e) {
+                console.warn('Failed to fetch/sanitize stylesheet:', href, e);
+              }
+            }
+          });
+
+          // 4. Force US Letter aspect ratio and scaling on the cloned letter container
           if (clonedLetter) {
             // US Letter width: 8.5in * 96px = 816px, height: 11in * 96px = 1056px
             clonedLetter.style.width = '816px';
@@ -139,9 +176,6 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
         }
       });
 
-      // Restore button visibility in original doc
-      if (actionButtons) actionButtons.style.opacity = '1';
-
       // Create PDF
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF({
@@ -156,6 +190,7 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
     } catch (err) {
       console.error('Error exporting nostalgic letter to PDF:', err);
     } finally {
+      if (actionButtons) actionButtons.style.opacity = '1';
       setDownloading(false);
     }
   };
