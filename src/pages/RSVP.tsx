@@ -223,12 +223,17 @@ export default function RSVP() {
       animate="show"
     >
       {/* Hero Image */}
-      <motion.div className="w-full h-48 rounded-xl overflow-hidden mt-6 mb-12 shadow-sm" variants={itemVariants}>
-        <img
-          alt="Hands with wedding bands"
-          className="w-full h-full object-cover"
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuDimWYmRKHU0Ydd3RZBngBXSihkABe3osiWU3LrOI2uKEbaYx9c82tj81ilQQb_Ub3ySWRGyKcjcf3kAka9w7wuXzg3O1NiuncebaMie6kiXnUBbE6_OGe9IYLaAVxhS8IbmF8D48SZY2QBaUSKbTnuGsF7kMYNAg62r-1W3MOoaGUTwRywKKHvqhOa6rHUcb8_AmTfz6-LJJOy7uOJYUYGUdYAXZXA6qHlyJ4pUL3NoQQHFXPgTWM83u87Yyoh-AUnUh0lAfE4EA"
-        />
+      <motion.div 
+        className="w-48 h-60 md:w-64 md:h-80 mx-auto rounded-2xl overflow-hidden mt-6 mb-12 border border-[#D1C4B0] shadow-[0_8px_30px_rgba(44,53,37,0.06)] bg-white p-2" 
+        variants={itemVariants}
+      >
+        <div className="w-full h-full overflow-hidden rounded-xl border border-[#D1C4B0]/40">
+          <img
+            alt="Pareja"
+            className="w-full h-full object-cover"
+            src="/screenPrincipal.png"
+          />
+        </div>
       </motion.div>
 
       {/* RSVP Section */}
