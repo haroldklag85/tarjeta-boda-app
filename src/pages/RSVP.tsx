@@ -12,6 +12,7 @@ export default function RSVP() {
   const [telefono, setTelefono] = useState('');
   const [asistencia, setAsistencia] = useState<'si' | 'no'>('si');
   const [alergias, setAlergias] = useState('');
+  const [musica, setMusica] = useState('');
   const [deseoText, setDeseoText] = useState('');
   const [invitadosExtras, setInvitadosExtras] = useState<{ id: number; nombre: string }[]>([]);
   
@@ -61,7 +62,7 @@ export default function RSVP() {
           // 2. Fetch existing RSVP if any
           const { data: rsvpData, error: rsvpError } = await supabase
             .from('rsvp')
-            .select('id, name, phone, is_attending, allergies, wish, extra_guests')
+            .select('id, name, phone, is_attending, allergies, wish, extra_guests, song_suggestion')
             .eq('invitation_id', invData.id)
             .maybeSingle();
 
@@ -73,6 +74,7 @@ export default function RSVP() {
             setTelefono(rsvpData.phone);
             setAsistencia(rsvpData.is_attending ? 'si' : 'no');
             setAlergias(rsvpData.allergies || '');
+            setMusica(rsvpData.song_suggestion || '');
             setDeseoText(rsvpData.wish || '');
             
             if (rsvpData.extra_guests && Array.isArray(rsvpData.extra_guests)) {
@@ -134,9 +136,10 @@ export default function RSVP() {
         name: nombre.trim(),
         phone: telefono.trim(),
         is_attending: asistencia === 'si',
-        allergies: allergiesNotEmpty(alergias),
+        allergies: asistencia === 'si' ? allergiesNotEmpty(alergias) : null,
         wish: wishNotEmpty(deseoText),
-        extra_guests: extraGuestsArray,
+        extra_guests: asistencia === 'si' ? extraGuestsArray : [],
+        song_suggestion: asistencia === 'si' ? songNotEmpty(musica) : null,
         updated_at: new Date().toISOString()
       };
 
@@ -182,6 +185,11 @@ export default function RSVP() {
   };
 
   const wishNotEmpty = (val: string) => {
+    const trimmed = val.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  };
+
+  const songNotEmpty = (val: string) => {
     const trimmed = val.trim();
     return trimmed.length > 0 ? trimmed : null;
   };
@@ -291,7 +299,7 @@ export default function RSVP() {
             </div>
 
             {/* Invitados Extras */}
-            {maxExtraGuests > 0 && (
+            {asistencia === 'si' && maxExtraGuests > 0 && (
               <div className="flex flex-col gap-4 mt-2">
                 <AnimatePresence>
                   {invitadosExtras.map((invitado, index) => (
@@ -374,19 +382,36 @@ export default function RSVP() {
               </div>
             </div>
 
-            {/* Allergies Input */}
-            <div className="flex flex-col gap-1 mt-3">
-              <label className="text-[0.875rem] font-semibold text-[#44483f]" htmlFor="alergias">Restricciones alimenticias o alergias</label>
-              <input
-                className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-3 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc]"
-                id="alergias"
-                name="alergias"
-                placeholder="Ninguna"
-                type="text"
-                value={alergias}
-                onChange={(e) => setAlergias(e.target.value)}
-              />
-            </div>
+            {/* Allergies & Song Suggestion Inputs */}
+            {asistencia === 'si' && (
+              <>
+                <div className="flex flex-col gap-1 mt-3">
+                  <label className="text-[0.875rem] font-semibold text-[#44483f]" htmlFor="alergias">Restricciones alimenticias o alergias</label>
+                  <input
+                    className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-3 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc]"
+                    id="alergias"
+                    name="alergias"
+                    placeholder="Ninguna"
+                    type="text"
+                    value={alergias}
+                    onChange={(e) => setAlergias(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1 mt-3">
+                  <label className="text-[0.875rem] font-semibold text-[#44483f]" htmlFor="musica">Sugiérenos una canción para la fiesta</label>
+                  <input
+                    className="w-full bg-transparent border-0 border-b border-[#D1C4B0] px-0 py-3 text-[1rem] text-[#2C3525] focus:ring-0 focus:border-primary transition-colors placeholder:text-[#c4c8bc]"
+                    id="musica"
+                    name="musica"
+                    placeholder="Ej. La Camisa Negra - Juanes"
+                    type="text"
+                    value={musica}
+                    onChange={(e) => setMusica(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Deseo Input */}
             <div className="flex flex-col gap-1 mt-6 mb-2">

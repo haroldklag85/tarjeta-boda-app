@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
-import { Users, CheckCircle, XCircle, Download, Search, RefreshCw, Key, Clipboard, Check, MessageSquare } from 'lucide-react';
+import { Users, CheckCircle, XCircle, Download, Search, RefreshCw, Key, Check, MessageSquare, Link, FileText, Send } from 'lucide-react';
 
 interface RSVPRecord {
   id: string;
@@ -10,6 +10,7 @@ interface RSVPRecord {
   allergies: string;
   wish: string;
   extra_guests: string[];
+  song_suggestion: string | null;
   created_at: string;
   invitations: {
     code: string;
@@ -35,6 +36,9 @@ export default function AdminPanel() {
   const [rsvps, setRsvps] = useState<RSVPRecord[]>([]);
   const [invitations, setInvitations] = useState<InvitationRecord[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
   
   // Search terms
   const [rsvpSearch, setRsvpSearch] = useState('');
@@ -53,14 +57,31 @@ export default function AdminPanel() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const key = params.get('key');
-    if (key === secretKey) {
+    const isSessionAuthorized = sessionStorage.getItem('admin_authorized') === 'true';
+
+    if (key === secretKey || isSessionAuthorized) {
       setAuthorized(true);
+      if (key === secretKey) {
+        sessionStorage.setItem('admin_authorized', 'true');
+      }
       fetchData();
     } else {
       setAuthorized(false);
       setLoading(false);
     }
   }, [secretKey]);
+
+  const handleManualLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === secretKey) {
+      setAuthorized(true);
+      setPasswordError(false);
+      sessionStorage.setItem('admin_authorized', 'true');
+      fetchData();
+    } else {
+      setPasswordError(true);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -76,6 +97,7 @@ export default function AdminPanel() {
           allergies,
           wish,
           extra_guests,
+          song_suggestion,
           created_at,
           invitations (
             code,
@@ -136,6 +158,38 @@ export default function AdminPanel() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const copyMessageToClipboard = (code: string, id: string) => {
+    const link = `${window.location.origin}/${code}`;
+    const text = `Hola, queremos compartir contigo nuestra invitación de boda. Será un día muy especial para nosotros y nos encantaría vivirlo con tu compañía. Puedes ingresar y confirmar tu asistencia aquí: ${link}`;
+    navigator.clipboard.writeText(text);
+    setCopiedMsgId(id);
+    setTimeout(() => setCopiedMsgId(null), 2000);
+  };
+
+  const getWhatsAppLink = (code: string) => {
+    const link = `${window.location.origin}/${code}`;
+    const text = `Hola, queremos compartir contigo nuestra invitación de boda. Será un día muy especial para nosotros y nos encantaría vivirlo con tu compañía. Puedes ingresar y confirmar tu asistencia aquí: ${link}`;
+    const cleanPhone = code.replace(/\D/g, '');
+    let formattedPhone = cleanPhone;
+    if (cleanPhone.length === 10) {
+      formattedPhone = `57${cleanPhone}`;
+    }
+    return `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(text)}`;
+  };
+
+  const downloadCSVTemplate = () => {
+    const headers = ['code', 'group_name', 'max_guests', 'custom_message'];
+    const sampleRows = [
+      ['3001234567', 'Familia Pérez y Acompañante', '2', 'Queridos tíos, nos haría muy felices contar con su presencia en este día tan especial.'],
+      ['3107654321', 'Juan Gómez', '1', 'Juan, esperamos de todo corazón que puedas acompañarnos a celebrar nuestro gran día.']
+    ];
+    const csvContent = '\uFEFF' + [
+      headers.join(';'),
+      ...sampleRows.map(row => row.map(val => `"${val.replace(/"/g, '""')}"`).join(';'))
+    ].join('\n');
+    triggerDownload(csvContent, 'plantilla_invitaciones_bulk.csv');
+  };
+
   const exportRsvps = () => {
     if (rsvps.length === 0) return;
 
@@ -146,6 +200,7 @@ export default function AdminPanel() {
       'Teléfono Confirmación',
       'Asiste',
       'Alergias/Restricciones',
+      'Canción Sugerida',
       'Acompañantes',
       'Mensaje/Deseo',
       'Fecha Confirmación'
@@ -158,6 +213,7 @@ export default function AdminPanel() {
       r.phone,
       r.is_attending ? 'SÍ' : 'NO',
       r.allergies || 'Ninguna',
+      r.song_suggestion || 'Ninguna',
       Array.isArray(r.extra_guests) ? r.extra_guests.filter(n => n.trim().length > 0).join(', ') : '',
       r.wish || '',
       new Date(r.created_at).toLocaleString('es-ES')
@@ -230,13 +286,34 @@ export default function AdminPanel() {
   if (authorized === false) {
     return (
       <div className="min-h-screen bg-[#F2EFE9] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 bg-[#b35c44]/15 rounded-full flex items-center justify-center text-[#b35c44] mb-6">
-          <Key size={32} />
+        <div className="bg-white p-8 rounded-xl border border-[#D1C4B0]/40 shadow-sm max-w-sm w-full flex flex-col items-center">
+          <div className="w-16 h-16 bg-[#edf7df] rounded-full flex items-center justify-center text-primary mb-6">
+            <Key size={32} />
+          </div>
+          <h1 className="font-serif text-2xl text-[#2C3525] mb-2 font-bold">Acceso Panel Admin</h1>
+          <p className="text-[#44483f] text-sm mb-6">
+            Por favor ingresa la clave de administrador para acceder a las confirmaciones y enlaces de invitaciones.
+          </p>
+          <form onSubmit={handleManualLogin} className="w-full flex flex-col gap-4">
+            <input
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="w-full px-4 py-2.5 text-sm bg-[#FBFBFA] border border-[#D1C4B0] rounded focus:ring-0 focus:border-primary placeholder-[#c4c8bc] transition-colors"
+              required
+            />
+            {passwordError && (
+              <p className="text-xs font-semibold text-[#b35c44]">Contraseña incorrecta. Inténtalo de nuevo.</p>
+            )}
+            <button
+              type="submit"
+              className="w-full bg-primary text-white py-2.5 rounded font-semibold text-sm hover:bg-[#384c2b] transition-colors shadow-sm"
+            >
+              Ingresar al Panel
+            </button>
+          </form>
         </div>
-        <h1 className="font-serif text-2xl text-[#2C3525] mb-2 font-bold">Acceso Denegado</h1>
-        <p className="text-[#44483f] max-w-sm text-sm">
-          No tienes permisos para ver este panel de administración. Por favor, asegúrate de utilizar el enlace con la clave secreta correcta.
-        </p>
       </div>
     );
   }
@@ -364,6 +441,7 @@ export default function AdminPanel() {
                         <th className="p-4">Nombre Principal</th>
                         <th className="p-4">¿Asiste?</th>
                         <th className="p-4">Alergias</th>
+                        <th className="p-4">Música</th>
                         <th className="p-4">Acompañantes</th>
                         <th className="p-4">Mensaje / Deseo</th>
                         <th className="p-4 text-right">Fecha</th>
@@ -395,6 +473,9 @@ export default function AdminPanel() {
                             <td className="p-4 max-w-[150px] truncate" title={r.allergies}>
                               {r.allergies || <span className="text-[#c4c8bc] italic">Ninguna</span>}
                             </td>
+                            <td className="p-4 max-w-[150px] truncate" title={r.song_suggestion || ''}>
+                              {r.song_suggestion || <span className="text-[#c4c8bc] italic">-</span>}
+                            </td>
                             <td className="p-4">
                               {extraNames.length > 0 ? (
                                 <div className="flex flex-col gap-1">
@@ -425,97 +506,144 @@ export default function AdminPanel() {
           </>
         ) : (
           /* TAB 2: Invitations list & WhatsApp Link Generator */
-          <div className="bg-white rounded-xl border border-[#D1C4B0]/40 shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-[#D1C4B0]/30 bg-[#FBFBFA] flex flex-col sm:flex-row justify-between gap-4">
-              <div className="relative w-full max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a8d86] h-4 w-4" />
-                <input
-                  type="text"
-                  placeholder="Buscar invitaciones por nombre o celular..."
-                  value={linkSearch}
-                  onChange={e => setLinkSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-[#D1C4B0] rounded focus:ring-0 focus:border-primary placeholder-[#c4c8bc] transition-colors"
-                />
+          <div className="flex flex-col gap-6">
+            {/* Quick Guide and CSV Template Download */}
+            <div className="bg-white rounded-xl border border-[#D1C4B0]/40 shadow-sm p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="flex-1">
+                <h3 className="font-serif text-lg text-primary font-bold mb-2">Importación Masiva de Invitaciones</h3>
+                <p className="text-xs text-[#44483f] leading-relaxed max-w-3xl">
+                  Para cargar tus invitados en bloque desde Excel, guarda tu archivo como <strong>CSV (delimitado por comas)</strong> con las siguientes columnas exactas:
+                  <code className="bg-[#FBFBFA] border border-[#D1C4B0]/40 px-1 py-0.5 rounded font-mono text-primary text-[11px] ml-1">code</code> (número de celular / código),
+                  <code className="bg-[#FBFBFA] border border-[#D1C4B0]/40 px-1 py-0.5 rounded font-mono text-primary text-[11px] ml-1">group_name</code> (sobre del invitado),
+                  <code className="bg-[#FBFBFA] border border-[#D1C4B0]/40 px-1 py-0.5 rounded font-mono text-primary text-[11px] ml-1">max_guests</code> (límite de personas), y
+                  <code className="bg-[#FBFBFA] border border-[#D1C4B0]/40 px-1 py-0.5 rounded font-mono text-primary text-[11px] ml-1">custom_message</code> (mensaje personalizado opcional).
+                  Luego, impórtalo desde la consola de Supabase en la tabla <strong>invitations</strong>.
+                </p>
               </div>
-              <div className="text-xs font-semibold text-[#566247] flex items-center bg-[#e7f2da] px-3 py-2 rounded border border-primary/5">
-                Total Registradas: {invitations.length} invitaciones
-              </div>
+              <button
+                onClick={downloadCSVTemplate}
+                className="flex items-center gap-2 bg-[#e7f2da] hover:bg-[#d7e5c2] text-primary px-4 py-2.5 rounded font-semibold text-xs transition-colors shadow-sm self-start md:self-auto whitespace-nowrap"
+              >
+                <Download className="h-4 w-4" />
+                Descargar Plantilla CSV
+              </button>
             </div>
 
-            {loading ? (
-              <div className="py-20 text-center text-[#8a8d86]">
-                <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
-                Cargando invitaciones...
+            <div className="bg-white rounded-xl border border-[#D1C4B0]/40 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-[#D1C4B0]/30 bg-[#FBFBFA] flex flex-col sm:flex-row justify-between gap-4">
+                <div className="relative w-full max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a8d86] h-4 w-4" />
+                  <input
+                    type="text"
+                    placeholder="Buscar invitaciones por nombre o celular..."
+                    value={linkSearch}
+                    onChange={e => setLinkSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-[#D1C4B0] rounded focus:ring-0 focus:border-primary placeholder-[#c4c8bc] transition-colors"
+                  />
+                </div>
+                <div className="text-xs font-semibold text-[#566247] flex items-center bg-[#e7f2da] px-3 py-2 rounded border border-primary/5">
+                  Total Registradas: {invitations.length} invitaciones
+                </div>
               </div>
-            ) : filteredInvitations.length === 0 ? (
-              <div className="py-20 text-center text-[#8a8d86]">
-                No se encontraron invitaciones cargadas. Utiliza la consola de Supabase para importar masivamente tu CSV.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-[#FBFBFA] border-b border-[#D1C4B0]/30 text-xs font-semibold text-[#566247] uppercase tracking-wider">
-                      <th className="p-4">Invitado (Sobre)</th>
-                      <th className="p-4">Código / Celular</th>
-                      <th className="p-4">Mensaje Personalizado</th>
-                      <th className="p-4">Acompañantes Permitidos</th>
-                      <th className="p-4">Enlace de Invitación</th>
-                      <th className="p-4 text-center">Copiar</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#D1C4B0]/20 text-[#44483f]">
-                    {filteredInvitations.map((i) => {
-                      const guestLink = `${window.location.origin}/${i.code}`;
 
-                      return (
-                        <tr key={i.id} className="hover:bg-[#FDFDFD] transition-colors">
-                          <td className="p-4 font-semibold text-[#2C3525]">
-                            {i.group_name}
-                          </td>
-                          <td className="p-4 font-mono font-bold text-[#2C3525]">
-                            {i.code}
-                          </td>
-                          <td className="p-4 max-w-[200px] truncate italic text-xs text-[#8a8d86]" title={i.custom_message}>
-                            {i.custom_message ? (
-                              <span className="flex items-center gap-1">
-                                <MessageSquare size={12} className="flex-shrink-0 text-primary/70" />
-                                {i.custom_message}
+              {loading ? (
+                <div className="py-20 text-center text-[#8a8d86]">
+                  <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
+                  Cargando invitaciones...
+                </div>
+              ) : filteredInvitations.length === 0 ? (
+                <div className="py-20 text-center text-[#8a8d86]">
+                  No se encontraron invitaciones cargadas. Utiliza la consola de Supabase para importar masivamente tu CSV.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-[#FBFBFA] border-b border-[#D1C4B0]/30 text-xs font-semibold text-[#566247] uppercase tracking-wider">
+                        <th className="p-4">Invitado (Sobre)</th>
+                        <th className="p-4">Código / Celular</th>
+                        <th className="p-4">Mensaje Personalizado</th>
+                        <th className="p-4">Acompañantes Permitidos</th>
+                        <th className="p-4">Enlace de Invitación</th>
+                        <th className="p-4 text-center">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#D1C4B0]/20 text-[#44483f]">
+                      {filteredInvitations.map((i) => {
+                        const guestLink = `${window.location.origin}/${i.code}`;
+
+                        return (
+                          <tr key={i.id} className="hover:bg-[#FDFDFD] transition-colors">
+                            <td className="p-4 font-semibold text-[#2C3525]">
+                              {i.group_name}
+                            </td>
+                            <td className="p-4 font-mono font-bold text-[#2C3525]">
+                              {i.code}
+                            </td>
+                            <td className="p-4 max-w-[200px] truncate italic text-xs text-[#8a8d86]" title={i.custom_message}>
+                              {i.custom_message ? (
+                                <span className="flex items-center gap-1">
+                                  <MessageSquare size={12} className="flex-shrink-0 text-primary/70" />
+                                  {i.custom_message}
+                                </span>
+                              ) : (
+                                <span className="text-[#c4c8bc]">-</span>
+                              )}
+                            </td>
+                            <td className="p-4 text-center">
+                              <span className="bg-[#FBFBFA] border border-[#D1C4B0]/50 text-[#566247] font-semibold px-2 py-0.5 rounded text-xs">
+                                {i.max_guests} {i.max_guests === 1 ? 'persona' : 'personas'}
                               </span>
-                            ) : (
-                              <span className="text-[#c4c8bc]">-</span>
-                            )}
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className="bg-[#FBFBFA] border border-[#D1C4B0]/50 text-[#566247] font-semibold px-2 py-0.5 rounded text-xs">
-                              {i.max_guests} {i.max_guests === 1 ? 'persona' : 'personas'}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <input
-                              type="text"
-                              readOnly
-                              value={guestLink}
-                              onClick={(e) => (e.target as HTMLInputElement).select()}
-                              className="bg-[#FBFBFA] border border-[#D1C4B0]/40 rounded px-2 py-1 text-xs font-mono text-[#8a8d86] w-full max-w-[280px] focus:outline-none"
-                            />
-                          </td>
-                          <td className="p-4 text-center">
-                            <button
-                              onClick={() => copyToClipboard(i.code, i.id)}
-                              className={`p-2 rounded border transition-colors shadow-sm ${copiedId === i.id ? 'bg-[#e7f2da] border-primary text-primary' : 'bg-white border-[#D1C4B0] hover:bg-[#e7f2da]/30 text-[#44483f]'}`}
-                              title="Copiar enlace"
-                            >
-                              {copiedId === i.id ? <Check size={14} /> : <Clipboard size={14} />}
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                            </td>
+                            <td className="p-4">
+                              <input
+                                type="text"
+                                readOnly
+                                value={guestLink}
+                                onClick={(e) => (e.target as HTMLInputElement).select()}
+                                className="bg-[#FBFBFA] border border-[#D1C4B0]/40 rounded px-2 py-1 text-xs font-mono text-[#8a8d86] w-full max-w-[280px] focus:outline-none"
+                              />
+                            </td>
+                            <td className="p-4 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                {/* 1. Copy bare Link */}
+                                <button
+                                  onClick={() => copyToClipboard(i.code, i.id)}
+                                  className={`p-2 rounded border transition-colors shadow-sm ${copiedId === i.id ? 'bg-[#e7f2da] border-primary text-primary' : 'bg-white border-[#D1C4B0] hover:bg-[#e7f2da]/30 text-[#44483f]'}`}
+                                  title="Copiar enlace"
+                                >
+                                  {copiedId === i.id ? <Check size={14} /> : <Link size={14} />}
+                                </button>
+
+                                {/* 2. Copy Message */}
+                                <button
+                                  onClick={() => copyMessageToClipboard(i.code, i.id)}
+                                  className={`p-2 rounded border transition-colors shadow-sm ${copiedMsgId === i.id ? 'bg-[#e7f2da] border-primary text-primary' : 'bg-white border-[#D1C4B0] hover:bg-[#e7f2da]/30 text-[#44483f]'}`}
+                                  title="Copiar mensaje completo"
+                                >
+                                  {copiedMsgId === i.id ? <Check size={14} /> : <FileText size={14} />}
+                                </button>
+
+                                {/* 3. Send by WhatsApp */}
+                                <a
+                                  href={getWhatsAppLink(i.code)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 rounded border border-[#25D366]/40 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#128C7E] transition-colors shadow-sm"
+                                  title="Enviar por WhatsApp"
+                                >
+                                  <Send size={14} />
+                                </a>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
