@@ -441,11 +441,11 @@ export default function RSVP() {
               {submitting ? (
                 <>
                   <RefreshCw className="h-4 w-4 animate-spin" />
-                  Guardando confirmación...
+                  Guardando respuesta...
                 </>
               ) : (
                 <>
-                  Confirmar Asistencia
+                  {asistencia === 'si' ? 'Confirmar Asistencia' : 'Confirmar no asistencia'}
                   <ArrowRight size={18} strokeWidth={2} />
                 </>
               )}
