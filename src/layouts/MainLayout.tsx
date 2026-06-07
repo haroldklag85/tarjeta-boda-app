@@ -45,9 +45,9 @@ export default function MainLayout() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4, ease: 'easeInOut' }}
-            className="bg-[#FDFCF0] dark:bg-stone-900 fixed top-0 left-0 w-full max-w-[100vw] z-50 flex justify-center items-center h-16 px-4 border-b border-[#E5E2D0] dark:border-stone-800 shadow-sm"
+            className="bg-[#FDFCF0] fixed top-0 left-0 w-full max-w-[100vw] z-50 flex justify-center items-center h-16 px-4 border-b border-[#E5E2D0] shadow-sm"
           >
-            <h1 className="text-xl font-serif italic text-primary dark:text-[#A3B18A] font-extrabold uppercase tracking-widest">
+            <h1 className="text-xl font-serif italic text-primary font-extrabold uppercase tracking-widest">
               A & H
             </h1>
             {/* Music Toggle Button */}
@@ -75,7 +75,7 @@ export default function MainLayout() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.4, ease: 'easeInOut' }}
-            className="bg-[#FDFCF0]/95 dark:bg-stone-900/95 backdrop-blur-md fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 pb-safe border-t border-[#E5E2D0] dark:border-stone-800"
+            className="bg-[#FDFCF0]/95 backdrop-blur-md fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 pb-safe border-t border-[#E5E2D0]"
           >
             <NavItem to="/" icon={<Home strokeWidth={1.5} size={24} />} label="Inicio" />
             <NavItem to="/ubicacion" icon={<MapPin strokeWidth={1.5} size={24} />} label="Logística" />
@@ -83,7 +83,7 @@ export default function MainLayout() {
             <NavItem to="/info" icon={
               <div className="relative">
                 <BookOpen strokeWidth={1.5} size={24} />
-                <span className="absolute -top-[2px] -right-[4px] text-[10px] font-extrabold bg-[#FDFCF0] dark:bg-stone-900 rounded-full w-3.5 h-3.5 flex items-center justify-center text-primary dark:text-[#A3B18A]">!</span>
+                <span className="absolute -top-[2px] -right-[4px] text-[10px] font-extrabold bg-[#FDFCF0] rounded-full w-3.5 h-3.5 flex items-center justify-center text-primary">!</span>
               </div>
             } label="Recomendaciones" />
           </motion.nav>
@@ -98,14 +98,14 @@ export default function MainLayout() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4, ease: 'easeInOut' }}
-            className="w-full flex flex-col items-center gap-4 px-8 pb-32 pt-12 bg-[#F4F1E1] dark:bg-stone-950 mt-auto"
+            className="w-full flex flex-col items-center gap-4 px-8 pb-32 pt-12 bg-[#F4F1E1] mt-auto"
           >
             <span className="text-sm font-bold text-primary font-serif italic text-center">
               Con amor, A & H | Evento formal sin niños
             </span>
             <div className="flex gap-4">
-              <a className="font-serif text-xs italic text-center text-stone-600 dark:text-stone-400 hover:text-primary underline" href="#">Hoteles</a>
-              <a className="font-serif text-xs italic text-center text-stone-600 dark:text-stone-400 hover:text-primary underline" href="#">Transporte</a>
+              <a className="font-serif text-xs italic text-center text-stone-600 hover:text-primary underline" href="#">Hoteles</a>
+              <a className="font-serif text-xs italic text-center text-stone-600 hover:text-primary underline" href="#">Transporte</a>
             </div>
           </motion.footer>
         )}
@@ -121,8 +121,8 @@ function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label
       className={({ isActive }) =>
         `flex flex-col items-center justify-center w-full h-full transition-colors ${
           isActive 
-            ? 'text-primary dark:text-[#A3B18A] font-bold border-t-2 border-primary -mt-[1px]' 
-            : 'text-stone-500 dark:text-stone-400 hover:text-primary/80'
+            ? 'text-primary font-bold border-t-2 border-primary -mt-[1px]' 
+            : 'text-stone-500 hover:text-primary/80'
         }`
       }
     >
