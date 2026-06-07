@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, X } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface NostalgicLetterProps {
   message: string;
@@ -73,30 +74,87 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
     try {
       // Find and temporarily hide action buttons during capture
       const actionButtons = letterRef.current.querySelector('.action-buttons') as HTMLElement;
-      
       if (actionButtons) actionButtons.style.opacity = '0';
 
       const canvas = await html2canvas(letterRef.current, {
         useCORS: true,
-        scale: 2.5, // High resolution capture
+        scale: 2, // 2x resolution is perfect for PDF performance
         backgroundColor: '#f5efe6',
         logging: false,
         onclone: (clonedDoc) => {
+          // Hide action buttons in cloned doc
           const clonedButtons = clonedDoc.querySelector('.action-buttons') as HTMLElement;
           if (clonedButtons) clonedButtons.style.display = 'none';
+
+          // Force US Letter aspect ratio and scaling on the cloned letter container
+          const clonedLetter = clonedDoc.querySelector('#nostalgic-letter-paper') as HTMLElement;
+          if (clonedLetter) {
+            // US Letter width: 8.5in * 96px = 816px, height: 11in * 96px = 1056px
+            clonedLetter.style.width = '816px';
+            clonedLetter.style.height = '1056px';
+            clonedLetter.style.maxWidth = 'none';
+            clonedLetter.style.transform = 'none';
+            clonedLetter.style.rotate = 'none';
+            clonedLetter.style.margin = '0';
+            clonedLetter.style.padding = '72px 56px 56px 56px';
+            clonedLetter.style.clipPath = 'none'; // Borderless print looks much better
+            clonedLetter.style.borderRadius = '0';
+            
+            // Adjust body text font size and style for US Letter page
+            const textContainer = clonedLetter.querySelector('.letter-body-text') as HTMLElement;
+            if (textContainer) {
+              textContainer.style.fontSize = '38px';
+              textContainer.style.lineHeight = '1.6';
+              textContainer.style.padding = '80px 20px 40px 20px';
+            }
+
+            // Adjust postmark/stamp position and scale
+            const postmark = clonedLetter.querySelector('.postmark-section') as HTMLElement;
+            if (postmark) {
+              postmark.style.top = '36px';
+              postmark.style.right = '36px';
+              postmark.style.transform = 'scale(1.4)';
+              postmark.style.transformOrigin = 'top right';
+            }
+
+            // Adjust signature layout
+            const signatureSec = clonedLetter.querySelector('.signature-section') as HTMLElement;
+            if (signatureSec) {
+              signatureSec.style.marginTop = '48px';
+              signatureSec.style.paddingTop = '32px';
+              
+              const label = signatureSec.querySelector('.signature-label') as HTMLElement;
+              if (label) {
+                label.style.fontSize = '13px';
+                label.style.marginBottom = '8px';
+              }
+              
+              const names = signatureSec.querySelector('.signature-names') as HTMLElement;
+              if (names) {
+                names.style.fontSize = '44px';
+                names.style.gap = '20px';
+              }
+            }
+          }
         }
       });
 
-      // Restore button visibility
+      // Restore button visibility in original doc
       if (actionButtons) actionButtons.style.opacity = '1';
 
-      const dataUrl = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = 'nuestra_carta_de_boda.png';
-      link.href = dataUrl;
-      link.click();
+      // Create PDF
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'in',
+        format: 'letter'
+      });
+
+      // Add image to cover the entire page (0 margin borderless format)
+      pdf.addImage(imgData, 'JPEG', 0, 0, 8.5, 11);
+      pdf.save('nuestra_carta_de_boda.pdf');
     } catch (err) {
-      console.error('Error exporting nostalgic letter:', err);
+      console.error('Error exporting nostalgic letter to PDF:', err);
     } finally {
       setDownloading(false);
     }
@@ -114,6 +172,7 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
       {/* 3D Paper Unfolding Container */}
       <motion.div
         ref={letterRef}
+        id="nostalgic-letter-paper"
         className="relative w-full max-w-[360px] sm:max-w-md bg-[#f5efe6] shadow-[0_20px_60px_rgba(0,0,0,0.5),_inset_0_0_50px_rgba(77,55,37,0.2)] border border-[#e8dfcf] p-8 pb-10 flex flex-col justify-between"
         style={{
           perspective: 1200,
@@ -142,9 +201,9 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
             boxShadow: '0 0.5px 1px rgba(77,55,37,0.05)'
           }}
         />
-
+ 
         {/* Retro Postal Cancel Mark & Stamp */}
-        <div className="absolute top-5 right-5 flex items-center gap-3 pointer-events-none select-none opacity-80 z-10">
+        <div className="postmark-section absolute top-5 right-5 flex items-center gap-3 pointer-events-none select-none opacity-80 z-10">
           {/* Cancel Mark (Circular ink lines) */}
           <div className="relative w-16 h-16 border border-[#4d3725]/30 rounded-full flex items-center justify-center rotate-12">
             <div className="absolute inset-2 border border-dashed border-[#4d3725]/30 rounded-full" />
@@ -154,7 +213,7 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
             <div className="absolute w-[120%] h-px bg-[#4d3725]/25 -rotate-12" />
             <div className="absolute w-[120%] h-px bg-[#4d3725]/25 -rotate-45" />
           </div>
-
+ 
           {/* Sello Postal (Postage Stamp) */}
           <div 
             className="w-11 h-13 bg-[#eedec4] border-2 border-dashed border-[#cbb898] p-1 flex flex-col justify-between shadow-sm relative overflow-hidden"
@@ -169,17 +228,17 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
             <div className="absolute inset-0 border-[3px] border-double border-[#eedec4] pointer-events-none" />
           </div>
         </div>
-
+ 
         {/* Nostalgic Coffee Stain / Aging marks */}
         <div className="absolute -bottom-8 -left-8 w-28 h-28 bg-[#b59e7f]/20 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute top-24 -left-8 w-20 h-20 bg-[#b59e7f]/15 rounded-full blur-xl pointer-events-none" />
         <div className="absolute top-[40%] right-[-10px] w-24 h-24 bg-[#8b6b4e]/10 rounded-full blur-2xl pointer-events-none" />
-
+ 
         {/* Letter Content */}
         <div className="mt-12 mb-6 flex-1 flex flex-col justify-between">
           {/* Main Body with Caveat Font (Legible, real handwriting look) */}
           <div 
-            className="text-[#4d3725] px-3 flex-grow flex items-center justify-center text-center py-4"
+            className="letter-body-text text-[#4d3725] px-3 flex-grow flex items-center justify-center text-center py-4"
             style={{
               fontFamily: '"Caveat", cursive',
               fontSize: 'clamp(21px, 5.8vw, 26px)',
@@ -193,12 +252,12 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
               {message}
             </p>
           </div>
-
+ 
           {/* Handwritten Signatures */}
-          <div className="mt-4 flex flex-col items-center border-t border-[#8f7959]/20 pt-4">
-            <span className="font-serif italic text-[#8f7959] text-[9px] uppercase tracking-widest opacity-80 mb-1">Con amor,</span>
+          <div className="signature-section mt-4 flex flex-col items-center border-t border-[#8f7959]/20 pt-4">
+            <span className="signature-label font-serif italic text-[#8f7959] text-[9px] uppercase tracking-widest opacity-80 mb-1">Con amor,</span>
             <div 
-              className="flex justify-center items-center gap-4 text-[#4d3725] opacity-95 select-none text-2xl"
+              className="signature-names flex justify-center items-center gap-4 text-[#4d3725] opacity-95 select-none text-2xl"
               style={{ fontFamily: '"Sacramento", cursive' }}
             >
               <span>Ana Maria</span>
@@ -207,7 +266,7 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
             </div>
           </div>
         </div>
-
+ 
         {/* Action Buttons & Close Icon Centered Below */}
         <div className="action-buttons flex flex-col items-center mt-2 pt-3 border-t border-[#8f7959]/10 gap-3">
           {/* Save Button */}
@@ -217,9 +276,9 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
             className="flex items-center justify-center gap-2 bg-[#8f7959] hover:bg-[#726046] text-white px-5 py-2.5 rounded font-semibold text-xs transition-colors shadow-md disabled:opacity-50 cursor-pointer w-full"
           >
             <Download size={14} />
-            {downloading ? 'Capturando carta...' : 'Guardar Carta'}
+            {downloading ? 'Generando PDF...' : 'Guardar Carta'}
           </button>
-
+ 
           {/* Centered Close Icon / Link at the end */}
           <button
             onClick={onClose}
