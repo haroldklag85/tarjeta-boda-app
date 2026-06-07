@@ -79,7 +79,7 @@ export default function Location() {
                 <h3 className="text-xl font-serif text-[#2C3525]">Ceremonia Religiosa</h3>
                 <span className="text-sm font-semibold text-[#566247] flex-shrink-0 mt-1 sm:mt-0">16:00 hrs</span>
               </div>
-              <p className="text-[#44483f] mb-3">Parroquia de San Miguel Arcángel. Solicitamos puntualidad para dar inicio a la celebración.</p>
+              <p className="text-[#44483f] mb-3">Nos encontraremos en la Parroquia Nuestra Señora del Perpetuo Socorro. Les agradecemos llegar puntualmente para compartir juntos el inicio de esta celebración tan especial.</p>
               <a href="https://maps.app.goo.gl/gHeK8PrupLjzwroq5" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary text-sm font-semibold hover:opacity-80 transition-opacity">
                 <MapPin size={16} />
                 Ver en el mapa
