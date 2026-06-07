@@ -30,18 +30,20 @@ export default function Invitation() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        {/* Hero Image (Arch Mask) */}
+        {/* Hero Image (4:3 Horizontal Frame) */}
         <motion.div 
-          className="w-48 h-64 md:w-64 md:h-80 mb-8 rounded-t-full rounded-b-lg overflow-hidden border border-[#D1C4B0] shadow-[0_4px_20px_rgba(44,53,37,0.05)]"
+          className="w-64 h-48 md:w-80 md:h-60 mb-8 rounded-2xl overflow-hidden border border-[#D1C4B0] shadow-[0_8px_30px_rgba(44,53,37,0.06)] bg-white p-2"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.2 }}
         >
-          <img 
-            alt="Pareja" 
-            className="w-full h-full object-cover" 
-            src="/screenPrincipal.png" 
-          />
+          <div className="w-full h-full overflow-hidden rounded-xl border border-[#D1C4B0]/40">
+            <img 
+              alt="Pareja" 
+              className="w-full h-full object-cover" 
+              src="/NewPrincipal.png" 
+            />
+          </div>
         </motion.div>
 
         {/* Welcome Message */}
