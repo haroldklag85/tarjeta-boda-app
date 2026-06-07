@@ -41,7 +41,7 @@ export default function Invitation() {
             <img 
               alt="Pareja" 
               className="w-full h-full object-cover" 
-              src="/NewPrincipal.png" 
+              src="/NewPrincipal.jpg" 
             />
           </div>
         </motion.div>
