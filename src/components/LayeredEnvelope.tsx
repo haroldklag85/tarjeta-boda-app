@@ -161,14 +161,14 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
     setPhase('breaking');
     setSealBroken(true);
 
-    // After seal animation, play the video from the start
+    // After seal animation, play the video
     setTimeout(() => {
       setPhase('playing');
       const v = videoRef.current;
       if (v) {
-        // Play from the beginning (t=0) to avoid seek/buffer issues
-        // The first 0.3s is a fade-in from black — we hide it with CSS opacity transition
-        v.currentTime = 0;
+        // Start playing directly from the first good frame (t = 0.35s)
+        // to prevent any black frame flash/transition gap.
+        v.currentTime = VIDEO_START_TIME;
         const playPromise = v.play();
         if (playPromise) {
           playPromise.catch(() => {
