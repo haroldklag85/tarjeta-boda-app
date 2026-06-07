@@ -4,6 +4,7 @@ import { Users, CheckCircle, XCircle, Download, Search, RefreshCw, Key, Check, M
 
 interface RSVPRecord {
   id: string;
+  invitation_id: string;
   name: string;
   phone: string;
   is_attending: boolean;
@@ -13,6 +14,7 @@ interface RSVPRecord {
   song_suggestion: string | null;
   created_at: string;
   invitations: {
+    id: string;
     code: string;
     group_name: string;
     max_guests: number;
@@ -27,6 +29,7 @@ interface InvitationRecord {
   max_guests: number;
   custom_message: string;
   created_at: string;
+  whatsapp_sent_at?: string | null;
 }
 
 export default function AdminPanel() {
@@ -95,6 +98,7 @@ export default function AdminPanel() {
         .from('rsvp')
         .select(`
           id,
+          invitation_id,
           name,
           phone,
           is_attending,
@@ -104,6 +108,7 @@ export default function AdminPanel() {
           song_suggestion,
           created_at,
           invitations (
+            id,
             code,
             group_name,
             max_guests,
@@ -155,13 +160,25 @@ export default function AdminPanel() {
         totalWishes: wishesCount,
       });
 
-      // 2. Fetch all Invitations
-      const { data: invData, error: invError } = await supabase
+      // 2. Fetch all Invitations (with fallback if whatsapp_sent_at is not created yet)
+      let invData;
+      const { data: testData, error: testError } = await supabase
         .from('invitations')
-        .select('id, code, group_name, max_guests, custom_message, created_at')
+        .select('id, code, group_name, max_guests, custom_message, created_at, whatsapp_sent_at')
         .order('group_name', { ascending: true });
 
-      if (invError) throw invError;
+      if (testError) {
+        console.warn('Could not fetch whatsapp_sent_at column. Falling back to query without it. Make sure to run SQL command.', testError);
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('invitations')
+          .select('id, code, group_name, max_guests, custom_message, created_at')
+          .order('group_name', { ascending: true });
+
+        if (fallbackError) throw fallbackError;
+        invData = fallbackData;
+      } else {
+        invData = testData;
+      }
       setInvitations((invData || []) as InvitationRecord[]);
 
     } catch (err) {
@@ -195,6 +212,31 @@ export default function AdminPanel() {
       formattedPhone = `57${cleanPhone}`;
     }
     return `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(text)}`;
+  };
+
+  const handleWhatsAppSend = async (invitationId: string, code: string) => {
+    const url = getWhatsAppLink(code);
+    window.open(url, '_blank', 'noopener,noreferrer');
+
+    const sentAt = new Date().toISOString();
+    try {
+      const { error } = await supabase
+        .from('invitations')
+        .update({ whatsapp_sent_at: sentAt })
+        .eq('id', invitationId);
+
+      if (error) {
+        console.error('Failed to save whatsapp_sent_at in Supabase (make sure the SQL command was run):', error);
+      } else {
+        setInvitations(prev =>
+          prev.map(inv =>
+            inv.id === invitationId ? { ...inv, whatsapp_sent_at: sentAt } : inv
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error updating whatsapp_sent_at:', err);
+    }
   };
 
   const downloadCSVTemplate = () => {
@@ -576,6 +618,40 @@ export default function AdminPanel() {
 
         {activeTab === 'links' && (
           <div className="flex flex-col gap-6">
+            {/* Stats Cards for Enlaces tab */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-5 rounded-xl border border-[#D1C4B0]/40 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">Total Sobres / Invitaciones</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-2xl font-bold text-[#2C3525]">{invitations.length}</span>
+                  <Link className="h-4 w-4 text-[#C49550] opacity-80" />
+                </div>
+              </div>
+              
+              <div className="bg-white p-5 rounded-xl border border-[#D1C4B0]/40 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">Total Personas Invitadas</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-2xl font-bold text-primary">
+                    {invitations.reduce((sum, i) => sum + (i.max_guests || 0), 0)}
+                  </span>
+                  <Users className="h-4 w-4 text-primary opacity-80" />
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-xl border border-[#D1C4B0]/40 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">Invitaciones Sin Respuesta</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-2xl font-bold text-amber-600">
+                    {(() => {
+                      const respondedIds = new Set(rsvps.map(r => r.invitation_id).filter(Boolean));
+                      return invitations.filter(inv => !respondedIds.has(inv.id)).length;
+                    })()}
+                  </span>
+                  <AlertTriangle className="h-4 w-4 text-amber-600 opacity-80" />
+                </div>
+              </div>
+            </div>
+
             {/* Quick Guide and CSV Template Download */}
             <div className="bg-white rounded-xl border border-[#D1C4B0]/40 shadow-sm p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="flex-1">
@@ -674,35 +750,71 @@ export default function AdminPanel() {
                               />
                             </td>
                             <td className="p-4 text-center">
-                              <div className="flex items-center justify-center gap-2">
-                                {/* 1. Copy bare Link */}
-                                <button
-                                  onClick={() => copyToClipboard(i.code, i.id)}
-                                  className={`p-2 rounded border transition-colors shadow-sm ${copiedId === i.id ? 'bg-[#e7f2da] border-primary text-primary' : 'bg-white border-[#D1C4B0] hover:bg-[#e7f2da]/30 text-[#44483f]'}`}
-                                  title="Copiar enlace"
-                                >
-                                  {copiedId === i.id ? <Check size={14} /> : <Link size={14} />}
-                                </button>
+                              <div className="flex flex-col items-center justify-center">
+                                <div className="flex items-center justify-center gap-2">
+                                  {/* 1. Copy bare Link */}
+                                  <button
+                                    onClick={() => copyToClipboard(i.code, i.id)}
+                                    className={`p-2 rounded border transition-colors shadow-sm ${copiedId === i.id ? 'bg-[#e7f2da] border-primary text-primary' : 'bg-white border-[#D1C4B0] hover:bg-[#e7f2da]/30 text-[#44483f]'}`}
+                                    title="Copiar enlace"
+                                  >
+                                    {copiedId === i.id ? <Check size={14} /> : <Link size={14} />}
+                                  </button>
 
-                                {/* 2. Copy Message */}
-                                <button
-                                  onClick={() => copyMessageToClipboard(i.code, i.id)}
-                                  className={`p-2 rounded border transition-colors shadow-sm ${copiedMsgId === i.id ? 'bg-[#e7f2da] border-primary text-primary' : 'bg-white border-[#D1C4B0] hover:bg-[#e7f2da]/30 text-[#44483f]'}`}
-                                  title="Copiar mensaje completo"
-                                >
-                                  {copiedMsgId === i.id ? <Check size={14} /> : <FileText size={14} />}
-                                </button>
+                                  {/* 2. Copy Message */}
+                                  <button
+                                    onClick={() => copyMessageToClipboard(i.code, i.id)}
+                                    className={`p-2 rounded border transition-colors shadow-sm ${copiedMsgId === i.id ? 'bg-[#e7f2da] border-primary text-primary' : 'bg-white border-[#D1C4B0] hover:bg-[#e7f2da]/30 text-[#44483f]'}`}
+                                    title="Copiar mensaje completo"
+                                  >
+                                    {copiedMsgId === i.id ? <Check size={14} /> : <FileText size={14} />}
+                                  </button>
 
-                                {/* 3. Send by WhatsApp */}
-                                <a
-                                  href={getWhatsAppLink(i.code)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="p-2 rounded border border-[#25D366]/40 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#128C7E] transition-colors shadow-sm"
-                                  title="Enviar por WhatsApp"
-                                >
-                                  <Send size={14} />
-                                </a>
+                                  {/* 3. Send by WhatsApp with traceability & alert */}
+                                  {(() => {
+                                    const respondedIds = new Set(rsvps.map(r => r.invitation_id).filter(Boolean));
+                                    const hasRSVP = respondedIds.has(i.id);
+                                    let isOverdue = false;
+                                    if (i.whatsapp_sent_at && !hasRSVP) {
+                                      const sentDate = new Date(i.whatsapp_sent_at);
+                                      const today = new Date();
+                                      const diffTime = today.getTime() - sentDate.getTime();
+                                      const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                                      isOverdue = diffDays >= 10;
+                                    }
+
+                                    if (isOverdue) {
+                                      return (
+                                        <button
+                                          onClick={() => handleWhatsAppSend(i.id, i.code)}
+                                          className="p-2 rounded border border-amber-500 bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-sm animate-pulse"
+                                          title="Reenviar invitación (Alerta: enviado hace más de 10 días sin respuesta)"
+                                        >
+                                          <AlertTriangle size={14} />
+                                        </button>
+                                      );
+                                    }
+
+                                    return (
+                                      <button
+                                        onClick={() => handleWhatsAppSend(i.id, i.code)}
+                                        className="p-2 rounded border border-[#25D366]/40 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#128C7E] transition-colors shadow-sm"
+                                        title="Enviar por WhatsApp"
+                                      >
+                                        <Send size={14} />
+                                      </button>
+                                    );
+                                  })()}
+                                </div>
+                                {i.whatsapp_sent_at ? (
+                                  <span className="block text-[10px] text-stone-500 mt-1.5 font-medium whitespace-nowrap">
+                                    Enviado: {new Date(i.whatsapp_sent_at).toLocaleDateString('es-ES')}
+                                  </span>
+                                ) : (
+                                  <span className="block text-[10px] text-stone-400 mt-1.5 font-medium whitespace-nowrap italic">
+                                    Sin enviar
+                                  </span>
+                                )}
                               </div>
                             </td>
                           </tr>
