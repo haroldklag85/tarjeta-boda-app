@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+:root {
+  color-scheme: only light;
+}
+
 @theme {
   --color-surface: #F2EFE9;
   --color-surface-dim: #d3dec6;
