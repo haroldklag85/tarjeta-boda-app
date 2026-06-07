@@ -104,8 +104,8 @@ export default function MainLayout() {
               Con amor, A & H | Evento formal sin niños
             </span>
             <div className="flex gap-4">
-              <a className="font-serif text-xs italic text-center text-stone-600 hover:text-primary underline" href="#">Hoteles</a>
-              <a className="font-serif text-xs italic text-center text-stone-600 hover:text-primary underline" href="#">Transporte</a>
+              <a className="font-serif text-xs italic text-center text-stone-600 hover:text-primary underline" href="/hoteles.pdf" target="_blank" rel="noopener noreferrer">Hoteles</a>
+              <a className="font-serif text-xs italic text-center text-stone-600 hover:text-primary underline" href="/transporte.pdf" target="_blank" rel="noopener noreferrer">Transporte</a>
             </div>
           </motion.footer>
         )}
