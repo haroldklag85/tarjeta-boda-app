@@ -10,6 +10,7 @@ interface NostalgicLetterProps {
 
 export default function NostalgicLetter({ message, onClose }: NostalgicLetterProps) {
   const letterRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
@@ -23,9 +24,45 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
       console.warn('Autoplay of paper sound was blocked:', err);
     });
 
-    // Clean up event on unmount
+    // 3. Request Fullscreen (hides browser chrome on Android)
+    const enterFullscreen = async () => {
+      try {
+        if (backdropRef.current) {
+          const elem = backdropRef.current as any;
+          if (elem.requestFullscreen) {
+            await elem.requestFullscreen();
+          } else if (elem.webkitRequestFullscreen) {
+            await elem.webkitRequestFullscreen();
+          } else if (elem.msRequestFullscreen) {
+            await elem.msRequestFullscreen();
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to enter fullscreen mode:', err);
+      }
+    };
+
+    const timer = setTimeout(enterFullscreen, 100);
+
+    // Clean up event and exit fullscreen on unmount
     return () => {
+      clearTimeout(timer);
       window.dispatchEvent(new CustomEvent('letter_state_change', { detail: { isOpen: false } }));
+      
+      try {
+        const doc = document as any;
+        if (doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement) {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (doc.webkitExitFullscreen) {
+            doc.webkitExitFullscreen();
+          } else if (doc.msExitFullscreen) {
+            doc.msExitFullscreen();
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to exit fullscreen mode:', err);
+      }
     };
   }, []);
 
@@ -67,6 +104,7 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
 
   return (
     <motion.div
+      ref={backdropRef}
       className="fixed inset-0 w-full h-full bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[999] overflow-y-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}

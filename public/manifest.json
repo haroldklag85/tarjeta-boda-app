@@ -1,0 +1,17 @@
+{
+  "short_name": "Boda H&A",
+  "name": "Boda Ana María y Harold",
+  "icons": [
+    {
+      "src": "/pwa_icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#F2EFE9",
+  "theme_color": "#2C3525",
+  "display": "standalone",
+  "orientation": "portrait"
+}
