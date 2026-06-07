@@ -157,9 +157,7 @@ export default function Location() {
       </motion.div>
 
       {/* Dress Code Section */}
-      <motion.section className="w-full relative overflow-hidden rounded-xl bg-[#edf7df] border border-[#D1C4B0]/40 p-8 sm:p-12 text-center flex flex-col items-center justify-center shadow-sm" variants={itemVariants}>
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#556b47] rounded-full blur-3xl opacity-20"></div>
-        <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-[#d7e5c2] rounded-full blur-3xl opacity-20"></div>
+      <motion.section className="w-full relative overflow-hidden rounded-xl bg-white border border-[#D1C4B0]/40 p-8 sm:p-12 text-center flex flex-col items-center justify-center shadow-sm hover:bg-[#e7f2da]/30 transition-colors duration-300" variants={itemVariants}>
 
         <div className="relative z-10 flex flex-col items-center w-full">
           <Shirt className="text-primary mb-3" size={36} strokeWidth={1.5} />
