@@ -227,7 +227,26 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
         pageNum++;
       }
       
-      pdf.save('nuestra_carta_de_boda.pdf');
+      const fileName = 'nuestra_carta_de_boda.pdf';
+      const pdfBlob = pdf.output('blob');
+      const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Nuestra Carta de Boda',
+            text: 'Aquí tienes nuestra carta de boda personalizada.',
+          });
+        } catch (shareErr: any) {
+          if (shareErr.name !== 'AbortError') {
+            console.error('Error sharing file via Web Share API:', shareErr);
+            pdf.save(fileName);
+          }
+        }
+      } else {
+        pdf.save(fileName);
+      }
     } catch (err) {
       console.error('Error exporting nostalgic letter to PDF:', err);
     } finally {
