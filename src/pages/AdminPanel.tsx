@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import { Users, CheckCircle, XCircle, Download, Search, RefreshCw, Key, Check, MessageSquare, Link, FileText, Send, AlertTriangle, Music, Heart, Image as ImageIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface RSVPRecord {
   id: string;
@@ -43,6 +44,13 @@ export default function AdminPanel() {
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
+
+  // WhatsApp template state
+  const [whatsappTemplate, setWhatsappTemplate] = useState('Hola, queremos compartir contigo nuestra invitación de boda. Será un día muy especial para nosotros y nos encantaría vivirlo con tu compañía. Puedes ingresar y confirmar tu asistencia aquí:');
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [tempTemplateText, setTempTemplateText] = useState('');
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [isLocalSettingsMode, setIsLocalSettingsMode] = useState(false);
   
   // Search terms
   const [rsvpSearch, setRsvpSearch] = useState('');
@@ -197,10 +205,52 @@ export default function AdminPanel() {
         setPhotoUploads([]);
       }
 
+      // 4. Fetch WhatsApp message template from settings table
+      try {
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('settings')
+          .select('value')
+          .eq('key', 'whatsapp_message_template')
+          .maybeSingle();
+
+        if (settingsError) throw settingsError;
+        if (settingsData && settingsData.value) {
+          setWhatsappTemplate(settingsData.value);
+        }
+        setIsLocalSettingsMode(false);
+      } catch (settingsErr) {
+        console.warn('Could not fetch whatsapp_message_template from settings. Falling back to local default.', settingsErr);
+        setIsLocalSettingsMode(true);
+      }
+
     } catch (err) {
       console.error('Error fetching admin data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveWhatsappTemplate = async () => {
+    setSavingTemplate(true);
+    try {
+      const cleanTemplate = tempTemplateText.trim();
+      const { error } = await supabase
+        .from('settings')
+        .upsert({ key: 'whatsapp_message_template', value: cleanTemplate });
+
+      if (error) throw error;
+      setWhatsappTemplate(cleanTemplate);
+      setIsTemplateModalOpen(false);
+      setIsLocalSettingsMode(false);
+    } catch (err) {
+      console.error('Error saving whatsapp template to Supabase settings:', err);
+      // Fallback local update
+      const cleanTemplate = tempTemplateText.trim();
+      setWhatsappTemplate(cleanTemplate);
+      setIsTemplateModalOpen(false);
+      setIsLocalSettingsMode(true);
+    } finally {
+      setSavingTemplate(false);
     }
   };
 
@@ -213,7 +263,8 @@ export default function AdminPanel() {
 
   const copyMessageToClipboard = (code: string, id: string) => {
     const link = `${window.location.origin}/${code}`;
-    const text = `Hola, queremos compartir contigo nuestra invitación de boda. Será un día muy especial para nosotros y nos encantaría vivirlo con tu compañía. Puedes ingresar y confirmar tu asistencia aquí: ${link}`;
+    const baseText = whatsappTemplate.trim();
+    const text = `${baseText} ${link}`;
     navigator.clipboard.writeText(text);
     setCopiedMsgId(id);
     setTimeout(() => setCopiedMsgId(null), 2000);
@@ -221,7 +272,8 @@ export default function AdminPanel() {
 
   const getWhatsAppLink = (code: string) => {
     const link = `${window.location.origin}/${code}`;
-    const text = `Hola, queremos compartir contigo nuestra invitación de boda. Será un día muy especial para nosotros y nos encantaría vivirlo con tu compañía. Puedes ingresar y confirmar tu asistencia aquí: ${link}`;
+    const baseText = whatsappTemplate.trim();
+    const text = `${baseText} ${link}`;
     const cleanPhone = code.replace(/\D/g, '');
     let formattedPhone = cleanPhone;
     if (cleanPhone.length === 10) {
@@ -708,8 +760,20 @@ export default function AdminPanel() {
                     className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-[#D1C4B0] rounded focus:ring-0 focus:border-primary placeholder-[#c4c8bc] transition-colors"
                   />
                 </div>
-                <div className="text-xs font-semibold text-[#566247] flex items-center bg-[#e7f2da] px-3 py-2 rounded border border-primary/5">
-                  Total Registradas: {invitations.length} invitaciones
+                <div className="flex items-center gap-3">
+                  <div className="text-xs font-semibold text-[#566247] flex items-center bg-[#e7f2da] px-3 py-2 rounded border border-primary/5">
+                    Total Registradas: {invitations.length} invitaciones
+                  </div>
+                  <button
+                    onClick={() => {
+                      setTempTemplateText(whatsappTemplate);
+                      setIsTemplateModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-semibold bg-white border border-[#D1C4B0] text-primary px-3 py-2 rounded hover:bg-[#e7f2da]/30 transition-colors shadow-sm"
+                  >
+                    <MessageSquare size={13} className="text-primary" />
+                    Editar mensaje
+                  </button>
                 </div>
               </div>
 
@@ -1084,6 +1148,83 @@ export default function AdminPanel() {
           </div>
         )}
       </div>
+
+      {/* Modal para editar plantilla de WhatsApp */}
+      <AnimatePresence>
+        {isTemplateModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl border border-[#D1C4B0] shadow-2xl max-w-lg w-full overflow-hidden text-left"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-[#D1C4B0]/20 bg-[#FBFBFA]">
+                <h3 className="font-serif text-lg text-[#2C3525] font-bold">Editar mensaje de WhatsApp</h3>
+                <p className="text-xs text-[#8a8d86] mt-1">Este mensaje se enviará al hacer clic en los enlaces de invitaciones.</p>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 flex flex-col gap-4">
+                {isLocalSettingsMode && (
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-700 flex items-start gap-2 leading-relaxed">
+                    <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
+                    <span>
+                      <strong>Modo Local / Demo:</strong> No se pudo conectar a la tabla de base de datos `settings`. Las modificaciones se guardarán temporalmente de forma local. Para persistir de forma permanente entre dispositivos, ejecuta el script SQL en Supabase.
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1.5 text-left">
+                  <label htmlFor="templateText" className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">Plantilla del mensaje</label>
+                  <textarea
+                    id="templateText"
+                    rows={4}
+                    value={tempTemplateText}
+                    onChange={e => setTempTemplateText(e.target.value)}
+                    placeholder="Escribe el mensaje aquí..."
+                    className="w-full px-4 py-3 bg-[#FBFBFA] border border-[#D1C4B0] rounded-xl focus:ring-0 focus:border-primary placeholder-[#c4c8bc] text-sm text-[#2C3525] transition-colors resize-none"
+                  />
+                  <p className="text-[10px] text-[#8a8d86] italic">Nota: El enlace único de la invitación del invitado se añadirá automáticamente al final de este mensaje.</p>
+                </div>
+
+                {/* Live Preview */}
+                <div className="flex flex-col gap-2 text-left">
+                  <span className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">Vista previa en tiempo real</span>
+                  <div className="bg-[#e7f2da]/30 border border-[#25D366]/20 rounded-xl p-4 text-xs text-[#2C3525] leading-relaxed relative font-medium">
+                    <div className="absolute top-2 right-2 text-[10px] uppercase font-bold text-[#128C7E]/70 bg-[#25D366]/10 px-2 py-0.5 rounded">
+                      Vista WhatsApp
+                    </div>
+                    <div className="whitespace-pre-wrap pr-16 text-left">
+                      {tempTemplateText.trim()} <span className="text-primary font-mono select-none underline break-all">{window.location.origin}/CODIGO_INVITADO</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-6 border-t border-[#D1C4B0]/20 bg-[#FBFBFA] flex justify-end gap-3">
+                <button
+                  onClick={() => setIsTemplateModalOpen(false)}
+                  disabled={savingTemplate}
+                  className="px-4 py-2 text-xs font-semibold text-[#566247] hover:bg-[#F2EFE9]/50 rounded-xl transition-colors border border-transparent hover:border-[#D1C4B0]/40 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={saveWhatsappTemplate}
+                  disabled={savingTemplate || tempTemplateText.trim().length === 0}
+                  className="bg-primary hover:bg-[#384c2b] text-white px-5 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {savingTemplate && <RefreshCw size={12} className="animate-spin" />}
+                  {savingTemplate ? 'Guardando...' : 'Guardar plantilla'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
