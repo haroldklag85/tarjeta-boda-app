@@ -142,21 +142,23 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
 
     const t = v.currentTime;
 
-    // Text appears at 1.5s, stays for ~6 seconds, then fades out
+    // Pause exactly at 6.6s before envelope starts rotating, keeping the name visible
+    if (t >= 6.6 && !hasPausedForContinue) {
+      v.pause();
+      setHasPausedForContinue(true);
+      setIsPausedForContinue(true);
+      setEnvelopeTextVisible(true);
+      return;
+    }
+
+    // Text appears at 1.5s, stays visible during pause, then fades out after resuming (at 6.75s)
     const textStartTime = 1.5;
-    const textEndTime = textStartTime + 5.2; // 5.2 seconds of visibility
+    const textEndTime = 6.75;
 
     if (t >= textStartTime && t < textEndTime) {
       setEnvelopeTextVisible(true);
     } else if (t >= textEndTime) {
       setEnvelopeTextVisible(false);
-      
-      // Pause exactly before envelope starts rotating
-      if (!hasPausedForContinue) {
-        v.pause();
-        setHasPausedForContinue(true);
-        setIsPausedForContinue(true);
-      }
     }
   }, [phase, hasPausedForContinue]);
 
@@ -242,7 +244,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
 
   return (
     <motion.div
-      className="fixed inset-0 overflow-hidden bg-black"
+      className={`fixed inset-0 overflow-hidden bg-black ${isPausedForContinue ? 'cursor-pointer' : ''}`}
       initial={{ scale: 1 }}
       animate={{ scale: isZoomed ? 1.8 : 1 }}
       exit={{ opacity: 0 }}
