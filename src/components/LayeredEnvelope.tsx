@@ -55,7 +55,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
   const [hasPausedForContinue, setHasPausedForContinue] = useState(false);
   const [isPausedForContinue, setIsPausedForContinue] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const typewriterIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const typewriterTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardControls = useAnimation();
 
   const [guestName, setGuestName] = useState('Señor y Señora\nPipito Pérez e Hijos');
@@ -101,36 +101,66 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
     };
   }, []);
 
-  // Typewriter effect — triggered when envelopeTextVisible becomes true
+  // Typewriter effect with variable humanized delay
   useEffect(() => {
     if (envelopeTextVisible) {
-      let i = 0;
-      setIsTypingComplete(false);
       const prefix = "Con mucho cariño para:\n";
       const fullText = prefix + guestName;
       setTypewriterText('');
-      const charDelay = 2500 / fullText.length; // ~2.5s to type entire text (more relaxed)
-      const interval = setInterval(() => {
-        i++;
-        setTypewriterText(fullText.slice(0, i));
-        if (i >= fullText.length) {
-          clearInterval(interval);
-          setIsTypingComplete(true);
+      setIsTypingComplete(false);
+
+      // Max duration for the whole typewriter animation: 4.4 seconds (4400ms)
+      // This guarantees finishing before second 6.4 (since it starts at 1.5s: 1.5 + 4.4 = 5.9s)
+      const targetTotalDuration = 4400;
+
+      // Assign weights to characters to humanize speed (newlines/punctuation = 3, spaces = 1.8, letters = 1)
+      let totalWeight = 0;
+      const weights = Array.from(fullText).map((char) => {
+        if (char === '\n' || char === ',' || char === '.' || char === ';') {
+          totalWeight += 3;
+          return 3;
+        } else if (char === ' ') {
+          totalWeight += 1.8;
+          return 1.8;
+        } else {
+          totalWeight += 1;
+          return 1;
         }
-      }, charDelay);
-      typewriterIntervalRef.current = interval;
+      });
+
+      const baseDelay = targetTotalDuration / totalWeight;
+      let index = 0;
+
+      const typeNextChar = () => {
+        if (index < fullText.length) {
+          index++;
+          setTypewriterText(fullText.slice(0, index));
+
+          if (index < fullText.length) {
+            const charWeight = weights[index];
+            const randomFactor = 0.75 + Math.random() * 0.5; // +/- 25% variation
+            const nextDelay = baseDelay * charWeight * randomFactor;
+            typewriterTimeoutRef.current = setTimeout(typeNextChar, nextDelay);
+          } else {
+            setIsTypingComplete(true);
+          }
+        }
+      };
+
+      typewriterTimeoutRef.current = setTimeout(typeNextChar, 50);
 
       return () => {
-        if (typewriterIntervalRef.current) {
-          clearInterval(typewriterIntervalRef.current);
+        if (typewriterTimeoutRef.current) {
+          clearTimeout(typewriterTimeoutRef.current);
+          typewriterTimeoutRef.current = null;
         }
       };
     } else {
       setTypewriterText('');
       setIsTypingComplete(false);
-      if (typewriterIntervalRef.current) {
-        clearInterval(typewriterIntervalRef.current);
-        typewriterIntervalRef.current = null;
+      if (typewriterTimeoutRef.current) {
+        clearTimeout(typewriterTimeoutRef.current);
+        typewriterTimeoutRef.current = null;
       }
     }
   }, [envelopeTextVisible, guestName]);
@@ -142,8 +172,8 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
 
     const t = v.currentTime;
 
-    // Pause exactly at 6.6s before envelope starts rotating, keeping the name visible
-    if (t >= 6.6 && !hasPausedForContinue) {
+    // Pause exactly at 6.5s before envelope starts rotating, keeping the name visible
+    if (t >= 6.5 && !hasPausedForContinue) {
       v.pause();
       setHasPausedForContinue(true);
       setIsPausedForContinue(true);
@@ -562,11 +592,8 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
           className="absolute left-0 right-0 flex flex-col items-center pointer-events-none z-30"
           style={{ bottom: '12%' }}
           initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: [0.4, 1, 0.4], y: 0 }}
-          transition={{ 
-            opacity: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
-            y: { duration: 0.6 }
-          }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
           <p className="text-[10px] text-[#2C3525] font-bold font-sans tracking-[0.2em] uppercase">
             Toque para continuar
