@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
-import { Users, CheckCircle, XCircle, Download, Search, RefreshCw, Key, Check, MessageSquare, Link, FileText, Send, AlertTriangle, Music, Heart, Image as ImageIcon } from 'lucide-react';
+import { Users, CheckCircle, XCircle, Download, Upload, Search, RefreshCw, Key, Check, MessageSquare, Link, FileText, Send, AlertTriangle, Music, Heart, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface RSVPRecord {
@@ -57,6 +57,21 @@ export default function AdminPanel() {
   const [linkSearch, setLinkSearch] = useState('');
   const [specialSearch, setSpecialSearch] = useState('');
   const [photoSearch, setPhotoSearch] = useState('');
+  
+  // Import guest list states
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importTab, setImportTab] = useState<'paste' | 'file'>('paste');
+  const [pasteText, setPasteText] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [importStep, setImportStep] = useState<'input' | 'preview' | 'uploading' | 'success'>('input');
+  const [validationReport, setValidationReport] = useState<any[]>([]);
+  const [headerMapping, setHeaderMapping] = useState<{ [key: string]: string }>({});
+  const [isOverwriteConfirmed, setIsOverwriteConfirmed] = useState(false);
+  const [overwriteText, setOverwriteText] = useState('');
+  const [importError, setImportError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [importSearch, setImportSearch] = useState('');
+  const [importStats, setImportStats] = useState({ total: 0, valid: 0, warnings: 0, errors: 0 });
   
   const [stats, setStats] = useState({
     totalInvitations: 0,
@@ -304,6 +319,291 @@ export default function AdminPanel() {
       }
     } catch (err) {
       console.error('Error updating whatsapp_sent_at:', err);
+    }
+  };
+
+  // Delimiter detection (supports tab, semicolon, comma)
+  const detectDelimiter = (text: string): string => {
+    const firstLine = text.split(/\r?\n/)[0] || '';
+    const tabs = (firstLine.match(/\t/g) || []).length;
+    const semicolons = (firstLine.match(/;/g) || []).length;
+    const commas = (firstLine.match(/,/g) || []).length;
+    
+    if (tabs > semicolons && tabs > commas) return '\t';
+    if (semicolons > commas) return ';';
+    return ',';
+  };
+
+  // State-machine CSV/TSV parser supporting quotes and CRLF inside cells
+  const parseCSVText = (text: string, delimiter: string): string[][] => {
+    const result: string[][] = [];
+    let row: string[] = [];
+    let cell = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+      
+      if (inQuotes) {
+        if (char === '"') {
+          if (nextChar === '"') {
+            cell += '"';
+            i++; // skip next quote
+          } else {
+            inQuotes = false; // closing quote
+          }
+        } else {
+          cell += char;
+        }
+      } else {
+        if (char === '"') {
+          inQuotes = true;
+        } else if (char === delimiter) {
+          row.push(cell);
+          cell = '';
+        } else if (char === '\n' || char === '\r') {
+          row.push(cell);
+          result.push(row);
+          row = [];
+          cell = '';
+          if (char === '\r' && nextChar === '\n') {
+            i++; // skip \n of \r\n
+          }
+        } else {
+          cell += char;
+        }
+      }
+    }
+    if (cell || row.length > 0) {
+      row.push(cell);
+      result.push(row);
+    }
+    // Filter out empty rows
+    return result.filter(r => r.length > 0 && r.some(c => c.trim().length > 0));
+  };
+
+  // Process and validate imports
+  const processAndValidateData = (rawText: string) => {
+    try {
+      setImportError(null);
+      const delimiter = detectDelimiter(rawText);
+      const parsed = parseCSVText(rawText, delimiter);
+      
+      if (parsed.length < 2) {
+        throw new Error('El archivo o texto no contiene suficientes filas (se requiere encabezado y al menos una fila de datos).');
+      }
+
+      const headers = parsed[0].map(h => h.trim().toLowerCase());
+      
+      // Mappings indices
+      let codeIdx = -1;
+      let groupNameIdx = -1;
+      let maxGuestsIdx = -1;
+      let customMessageIdx = -1;
+
+      headers.forEach((h, idx) => {
+        if (['code', 'codigo', 'celular', 'tel', 'telefono', 'phone'].includes(h)) {
+          codeIdx = idx;
+        } else if (['group_name', 'groupname', 'grupo', 'nombre', 'nombre_grupo', 'invitado', 'sobres', 'sobre'].includes(h)) {
+          groupNameIdx = idx;
+        } else if (['max_guests', 'maxguests', 'pases', 'invitados', 'maximo', 'personas', 'limite', 'cupos'].includes(h)) {
+          maxGuestsIdx = idx;
+        } else if (['custom_message', 'custommessage', 'mensaje', 'mensaje_personalizado', 'custom', 'carta'].includes(h)) {
+          customMessageIdx = idx;
+        }
+      });
+
+      // Position fallbacks if headers aren't exact
+      if (codeIdx === -1) codeIdx = 0;
+      if (groupNameIdx === -1 && parsed[0].length > 1) groupNameIdx = 1;
+      if (maxGuestsIdx === -1 && parsed[0].length > 2) maxGuestsIdx = 2;
+      if (customMessageIdx === -1 && parsed[0].length > 3) customMessageIdx = 3;
+
+      const detectedMapping = {
+        code: parsed[0][codeIdx] || 'Código/Celular (Columna 1)',
+        group_name: parsed[0][groupNameIdx] || 'Grupo/Sobre (Columna 2)',
+        max_guests: parsed[0][maxGuestsIdx] || 'Pases (Columna 3)',
+        custom_message: customMessageIdx !== -1 && parsed[0][customMessageIdx] ? parsed[0][customMessageIdx] : 'Sin mapear',
+      };
+      setHeaderMapping(detectedMapping);
+
+      const report: any[] = [];
+      const codeSet = new Set<string>();
+      let warningsCount = 0;
+      let errorsCount = 0;
+
+      for (let i = 1; i < parsed.length; i++) {
+        const row = parsed[i];
+        
+        const rawCode = row[codeIdx] !== undefined ? row[codeIdx].trim() : '';
+        const rawGroupName = row[groupNameIdx] !== undefined ? row[groupNameIdx].trim() : '';
+        const rawMaxGuests = row[maxGuestsIdx] !== undefined ? row[maxGuestsIdx].trim() : '';
+        const rawCustomMsg = customMessageIdx !== -1 && row[customMessageIdx] !== undefined ? row[customMessageIdx].trim() : '';
+
+        const validatedRow: any = {
+          rowIndex: i,
+          code: rawCode,
+          group_name: rawGroupName,
+          max_guests: rawMaxGuests,
+          custom_message: rawCustomMsg,
+          status: 'success',
+          issues: []
+        };
+
+        // 1. Group name validation
+        if (!rawGroupName) {
+          validatedRow.status = 'error';
+          validatedRow.issues.push('Falta el nombre del grupo/sobre.');
+        }
+
+        // 2. Code validation
+        if (!rawCode) {
+          validatedRow.status = 'error';
+          validatedRow.issues.push('Falta el celular/código.');
+        } else {
+          const cleanCode = rawCode.replace(/\D/g, '');
+          if (cleanCode.length === 0) {
+            validatedRow.status = 'error';
+            validatedRow.issues.push('El código/celular debe contener dígitos.');
+          } else if (cleanCode.length !== 10) {
+            validatedRow.status = validatedRow.status === 'error' ? 'error' : 'warning';
+            validatedRow.issues.push('El número de celular no tiene 10 dígitos (formato estándar de Colombia).');
+          }
+          
+          if (codeSet.has(rawCode)) {
+            validatedRow.status = 'error';
+            validatedRow.issues.push(`Número de celular duplicado en el archivo: "${rawCode}".`);
+          } else {
+            codeSet.add(rawCode);
+          }
+        }
+
+        // 3. Max guests validation
+        if (!rawMaxGuests) {
+          validatedRow.status = 'error';
+          validatedRow.issues.push('Falta la cantidad de pases.');
+        } else {
+          const parsedGuests = parseInt(rawMaxGuests, 10);
+          if (isNaN(parsedGuests)) {
+            validatedRow.status = 'error';
+            validatedRow.issues.push(`La cantidad de pases no es un número válido: "${rawMaxGuests}".`);
+          } else if (parsedGuests <= 0) {
+            validatedRow.status = 'error';
+            validatedRow.issues.push(`Los pases deben ser mayores a 0 (recibido: ${parsedGuests}).`);
+          } else {
+            validatedRow.max_guests_numeric = parsedGuests;
+          }
+        }
+
+        if (validatedRow.status === 'error') {
+          errorsCount++;
+        } else if (validatedRow.status === 'warning') {
+          warningsCount++;
+        }
+
+        report.push(validatedRow);
+      }
+
+      setValidationReport(report);
+      setImportStats({
+        total: report.length,
+        valid: report.length - errorsCount - warningsCount,
+        warnings: warningsCount,
+        errors: errorsCount
+      });
+      setImportStep('preview');
+
+    } catch (err: any) {
+      setImportError(err.message || 'Error desconocido al procesar e importar.');
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    readAndProcessFile(file);
+  };
+
+  const readAndProcessFile = (file: File) => {
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (text) {
+        processAndValidateData(text);
+      }
+    };
+    reader.onerror = () => {
+      setImportError('No se pudo leer el archivo seleccionado.');
+    };
+    reader.readAsText(file);
+  };
+
+  const executeImportUpload = async () => {
+    setImportStep('uploading');
+    setUploadProgress(10);
+    setImportError(null);
+    try {
+      // 1. Delete all RSVPs
+      const { error: rsvpDeleteError } = await supabase
+        .from('rsvp')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (rsvpDeleteError) {
+        throw new Error(`Error al limpiar los registros de RSVP: ${rsvpDeleteError.message}`);
+      }
+      setUploadProgress(30);
+
+      // 2. Delete all invitations
+      const { error: invDeleteError } = await supabase
+        .from('invitations')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (invDeleteError) {
+        throw new Error(`Error al limpiar las invitaciones previas: ${invDeleteError.message}`);
+      }
+      setUploadProgress(50);
+
+      // 3. Prepare inserts
+      const insertRows = validationReport.map(row => ({
+        code: row.code,
+        group_name: row.group_name,
+        max_guests: row.max_guests_numeric,
+        custom_message: row.custom_message || ''
+      }));
+
+      // Chunk inserts in sizes of 50
+      const chunkSize = 50;
+      const totalChunks = Math.ceil(insertRows.length / chunkSize);
+      
+      for (let chunkIdx = 0; chunkIdx < totalChunks; chunkIdx++) {
+        const start = chunkIdx * chunkSize;
+        const end = start + chunkSize;
+        const chunk = insertRows.slice(start, end);
+
+        const { error: insertError } = await supabase
+          .from('invitations')
+          .insert(chunk);
+
+        if (insertError) {
+          throw new Error(`Error al insertar lote ${chunkIdx + 1}: ${insertError.message}`);
+        }
+
+        const progressPercent = 50 + Math.round(((chunkIdx + 1) / totalChunks) * 50);
+        setUploadProgress(progressPercent);
+      }
+
+      setImportStep('success');
+      fetchData();
+
+    } catch (err: any) {
+      console.error('Error in executeImportUpload:', err);
+      setImportError(err.message || 'Error al guardar los datos en Supabase.');
+      setImportStep('preview');
+      setIsOverwriteConfirmed(false);
     }
   };
 
@@ -731,21 +1031,34 @@ export default function AdminPanel() {
               <div className="flex-1">
                 <h3 className="font-serif text-lg text-primary font-bold mb-2">Importación Masiva de Invitaciones</h3>
                 <p className="text-xs text-[#44483f] leading-relaxed max-w-3xl">
-                  Para cargar tus invitados en bloque desde Excel, guarda tu archivo como <strong>CSV (delimitado por comas)</strong> con las siguientes columnas exactas:
-                  <code className="bg-[#FBFBFA] border border-[#D1C4B0]/40 px-1 py-0.5 rounded font-mono text-primary text-[11px] ml-1">code</code> (número de celular / código),
-                  <code className="bg-[#FBFBFA] border border-[#D1C4B0]/40 px-1 py-0.5 rounded font-mono text-primary text-[11px] ml-1">group_name</code> (sobre del invitado),
-                  <code className="bg-[#FBFBFA] border border-[#D1C4B0]/40 px-1 py-0.5 rounded font-mono text-primary text-[11px] ml-1">max_guests</code> (límite de personas), y
-                  <code className="bg-[#FBFBFA] border border-[#D1C4B0]/40 px-1 py-0.5 rounded font-mono text-primary text-[11px] ml-1">custom_message</code> (mensaje personalizado opcional).
-                  Luego, impórtalo desde la consola de Supabase en la tabla <strong>invitations</strong>.
+                  Carga tus invitados en bloque utilizando nuestro importador integrado. Soporta la carga de archivos <strong>CSV, TSV y de texto</strong>, además del copiado y pegado directo de celdas desde Excel o Google Sheets. El sistema validará los datos y te alertará de cualquier error antes de aplicarlos.
                 </p>
               </div>
-              <button
-                onClick={downloadCSVTemplate}
-                className="flex items-center gap-2 bg-[#e7f2da] hover:bg-[#d7e5c2] text-primary px-4 py-2.5 rounded font-semibold text-xs transition-colors shadow-sm self-start md:self-auto whitespace-nowrap"
-              >
-                <Download className="h-4 w-4" />
-                Descargar Plantilla CSV
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                <button
+                  onClick={downloadCSVTemplate}
+                  className="flex items-center justify-center gap-2 bg-white border border-[#D1C4B0] hover:bg-[#F2EFE9]/50 text-[#566247] px-4 py-2.5 rounded transition-colors text-xs font-semibold shadow-sm whitespace-nowrap"
+                >
+                  <Download className="h-4 w-4" />
+                  Descargar Plantilla CSV
+                </button>
+                <button
+                  onClick={() => {
+                    setImportStep('input');
+                    setPasteText('');
+                    setSelectedFile(null);
+                    setValidationReport([]);
+                    setImportError(null);
+                    setIsOverwriteConfirmed(false);
+                    setOverwriteText('');
+                    setIsImportModalOpen(true);
+                  }}
+                  className="flex items-center justify-center gap-2 bg-primary hover:bg-[#384c2b] text-white px-4 py-2.5 rounded transition-colors text-xs font-bold shadow-sm whitespace-nowrap"
+                >
+                  <Upload className="h-4 w-4" />
+                  Importar Invitados
+                </button>
+              </div>
             </div>
 
             <div className="bg-white rounded-xl border border-[#D1C4B0]/40 shadow-sm overflow-hidden">
@@ -1220,6 +1533,371 @@ export default function AdminPanel() {
                   {savingTemplate && <RefreshCw size={12} className="animate-spin" />}
                   {savingTemplate ? 'Guardando...' : 'Guardar plantilla'}
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {isImportModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-hidden">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl border border-[#D1C4B0] shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden text-left"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-[#D1C4B0]/20 bg-[#FBFBFA] flex justify-between items-center flex-shrink-0">
+                <div>
+                  <h3 className="font-serif text-lg text-[#2C3525] font-bold">Importación Masiva de Invitados</h3>
+                  <p className="text-xs text-[#8a8d86] mt-1">Carga tu lista y valida las restricciones de formato antes de guardarla.</p>
+                </div>
+                {importStep !== 'uploading' && (
+                  <button
+                    onClick={() => setIsImportModalOpen(false)}
+                    className="p-1.5 rounded-lg hover:bg-[#F2EFE9] text-[#8a8d86] transition-colors"
+                  >
+                    <XCircle size={20} />
+                  </button>
+                )}
+              </div>
+
+              {/* Error Alert Bar */}
+              {importError && (
+                <div className="mx-6 mt-4 p-3.5 bg-red-50 border border-red-200 text-red-800 rounded-xl text-xs flex items-start gap-2.5">
+                  <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+                  <span className="font-medium">{importError}</span>
+                </div>
+              )}
+
+              {/* Main Content Area */}
+              <div className="flex-1 overflow-y-auto p-6 min-h-0">
+                {importStep === 'input' && (
+                  <div className="flex flex-col gap-5">
+                    {/* Method Selector Tabs */}
+                    <div className="flex border-b border-[#D1C4B0]/20 gap-4">
+                      <button
+                        onClick={() => { setImportTab('paste'); setImportError(null); }}
+                        className={`pb-2 text-xs font-bold border-b-2 transition-colors ${importTab === 'paste' ? 'border-primary text-primary' : 'border-transparent text-[#8a8d86]'}`}
+                      >
+                        Copiar y Pegar desde Excel
+                      </button>
+                      <button
+                        onClick={() => { setImportTab('file'); setImportError(null); }}
+                        className={`pb-2 text-xs font-bold border-b-2 transition-colors ${importTab === 'file' ? 'border-primary text-primary' : 'border-transparent text-[#8a8d86]'}`}
+                      >
+                        Subir Archivo (.csv, .tsv, .txt)
+                      </button>
+                    </div>
+
+                    {importTab === 'paste' ? (
+                      <div className="flex flex-col gap-2">
+                        <label htmlFor="paste-input" className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">
+                          Pega tus filas aquí (incluyendo la fila de encabezados):
+                        </label>
+                        <textarea
+                          id="paste-input"
+                          rows={10}
+                          value={pasteText}
+                          onChange={e => setPasteText(e.target.value)}
+                          placeholder="code&#9;group_name&#9;max_guests&#9;custom_message&#10;3001234567&#9;Familia Pérez y Acompañante&#9;2&#9;Queridos tíos, esperamos contar con ustedes.&#10;3107654321&#9;Juan Gómez&#9;1&#9;Juan, te esperamos en nuestro gran día."
+                          className="w-full px-4 py-3 bg-[#FBFBFA] border border-[#D1C4B0] rounded-xl focus:ring-0 focus:border-primary placeholder-[#c4c8bc] text-xs font-mono transition-colors resize-y leading-relaxed"
+                        />
+                        <p className="text-[10px] text-[#8a8d86] leading-relaxed">
+                          * Copia directamente las celdas de tu hoja de cálculo (Excel, Google Sheets) y pégalas arriba. Los tabuladores se detectarán automáticamente y se procesará el formato.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        <label className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">
+                          Selecciona o arrastra tu archivo:
+                        </label>
+                        <div
+                          onDragOver={e => e.preventDefault()}
+                          onDrop={e => {
+                            e.preventDefault();
+                            const file = e.dataTransfer.files?.[0];
+                            if (file) readAndProcessFile(file);
+                          }}
+                          className="border-2 border-dashed border-[#D1C4B0] hover:border-primary bg-[#FBFBFA] hover:bg-[#e7f2da]/10 transition-colors rounded-2xl p-10 flex flex-col items-center justify-center text-center cursor-pointer relative"
+                        >
+                          <input
+                            type="file"
+                            accept=".csv,.tsv,.txt"
+                            onChange={handleFileChange}
+                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                          />
+                          <Upload className="h-10 w-10 text-primary opacity-60 mb-3" />
+                          <span className="text-sm font-semibold text-[#2C3525] mb-1">
+                            {selectedFile ? selectedFile.name : 'Haz clic para seleccionar o arrastra un archivo'}
+                          </span>
+                          <span className="text-xs text-[#8a8d86]">
+                            Soporta CSV delimitado por comas o punto y coma, y archivos de texto (.txt) tabulados.
+                          </span>
+                        </div>
+                        {selectedFile && (
+                          <div className="bg-[#e7f2da]/30 border border-primary/10 rounded-xl p-3.5 flex justify-between items-center text-xs">
+                            <span className="font-semibold text-primary">Archivo cargado: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                            <button
+                              onClick={() => { setSelectedFile(null); setValidationReport([]); }}
+                              className="text-red-600 hover:text-red-700 font-semibold"
+                            >
+                              Quitar
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {importStep === 'preview' && (
+                  <div className="flex flex-col gap-6 h-full min-h-0">
+                    {/* Stats Dashboard */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-shrink-0">
+                      <div className="bg-[#FBFBFA] border border-[#D1C4B0]/40 p-4 rounded-xl flex flex-col">
+                        <span className="text-[10px] font-bold text-[#8a8d86] uppercase tracking-wider">Total Filas</span>
+                        <span className="text-xl font-bold text-[#2C3525] mt-1">{importStats.total}</span>
+                      </div>
+                      <div className="bg-[#e7f2da]/40 border border-primary/20 p-4 rounded-xl flex flex-col">
+                        <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Correctas</span>
+                        <span className="text-xl font-bold text-primary mt-1">{importStats.valid}</span>
+                      </div>
+                      <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex flex-col">
+                        <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Advertencias</span>
+                        <span className="text-xl font-bold text-amber-600 mt-1">{importStats.warnings}</span>
+                      </div>
+                      <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex flex-col">
+                        <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">Errores</span>
+                        <span className="text-xl font-bold text-red-600 mt-1">{importStats.errors}</span>
+                      </div>
+                    </div>
+
+                    {/* Mappings Info Box */}
+                    <div className="bg-[#e7f2da]/20 border border-primary/10 rounded-xl p-4 text-xs flex flex-wrap gap-x-6 gap-y-2 flex-shrink-0">
+                      <span className="font-semibold text-primary">Mapeo detectado:</span>
+                      <span><strong>Celular/Código:</strong> <code className="bg-white border px-1 rounded">{headerMapping.code}</code></span>
+                      <span><strong>Nombre/Sobre:</strong> <code className="bg-white border px-1 rounded">{headerMapping.group_name}</code></span>
+                      <span><strong>Pases:</strong> <code className="bg-white border px-1 rounded">{headerMapping.max_guests}</code></span>
+                      <span><strong>Mensaje:</strong> <code className="bg-white border px-1 rounded">{headerMapping.custom_message}</code></span>
+                    </div>
+
+                    {/* Preview Table with Search */}
+                    <div className="flex-1 flex flex-col min-h-0 bg-[#FBFBFA] border border-[#D1C4B0]/40 rounded-xl overflow-hidden">
+                      <div className="p-3 border-b border-[#D1C4B0]/30 bg-white flex-shrink-0 flex items-center justify-between gap-4">
+                        <span className="text-xs font-bold text-[#566247]">Vista Previa de Validación</span>
+                        <div className="relative w-48 sm:w-64">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8a8d86] h-3.5 w-3.5" />
+                          <input
+                            type="text"
+                            placeholder="Buscar en la vista previa..."
+                            value={importSearch}
+                            onChange={e => setImportSearch(e.target.value)}
+                            className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#FBFBFA] border border-[#D1C4B0] rounded-lg focus:ring-0 focus:border-primary placeholder-[#c4c8bc] transition-colors"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex-1 overflow-auto min-h-0">
+                        <table className="w-full text-left border-collapse text-xs">
+                          <thead className="bg-[#FBFBFA] border-b border-[#D1C4B0]/20 text-[10px] font-bold text-[#566247] uppercase tracking-wider sticky top-0 z-10">
+                            <tr>
+                              <th className="p-3 w-12 text-center bg-[#FBFBFA]">Fila</th>
+                              <th className="p-3 w-28 bg-[#FBFBFA]">Código/Celular</th>
+                              <th className="p-3 w-40 bg-[#FBFBFA]">Nombre/Sobre</th>
+                              <th className="p-3 w-16 text-center bg-[#FBFBFA]">Pases</th>
+                              <th className="p-3 bg-[#FBFBFA]">Mensaje Personalizado</th>
+                              <th className="p-3 w-32 bg-[#FBFBFA]">Estado / Detalles</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#D1C4B0]/20 bg-white text-[#44483f]">
+                            {validationReport
+                              .filter(row => {
+                                const term = importSearch.toLowerCase();
+                                return (
+                                  row.code.toLowerCase().includes(term) ||
+                                  row.group_name.toLowerCase().includes(term) ||
+                                  row.custom_message.toLowerCase().includes(term) ||
+                                  row.issues.some((issue: string) => issue.toLowerCase().includes(term))
+                                );
+                              })
+                              .map((row) => (
+                                <tr key={row.rowIndex} className="hover:bg-[#FDFDFD] transition-colors">
+                                  <td className="p-3 text-center text-[#8a8d86] font-mono">{row.rowIndex}</td>
+                                  <td className="p-3 font-mono font-semibold text-[#2C3525]">{row.code || <span className="text-red-500 italic">Vacío</span>}</td>
+                                  <td className="p-3 font-semibold text-[#2C3525]">{row.group_name || <span className="text-red-500 italic">Vacío</span>}</td>
+                                  <td className="p-3 text-center font-bold">{row.max_guests}</td>
+                                  <td className="p-3 text-[#8a8d86] max-w-[200px] truncate" title={row.custom_message}>{row.custom_message || <span className="text-stone-300 italic">-</span>}</td>
+                                  <td className="p-3">
+                                    <div className="flex items-start gap-1.5">
+                                      {row.status === 'success' && (
+                                        <span className="flex items-center gap-1 text-primary font-bold">
+                                          <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                                          Válido
+                                        </span>
+                                      )}
+                                      {row.status === 'warning' && (
+                                        <div className="flex flex-col gap-0.5 text-amber-600">
+                                          <span className="flex items-center gap-1 font-bold">
+                                            <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                                            Advertencia
+                                          </span>
+                                          <span className="text-[10px] leading-tight font-medium text-stone-600">{row.issues.join(' ')}</span>
+                                        </div>
+                                      )}
+                                      {row.status === 'error' && (
+                                        <div className="flex flex-col gap-0.5 text-red-600">
+                                          <span className="flex items-center gap-1 font-bold">
+                                            <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                                            Error
+                                          </span>
+                                          <span className="text-[10px] leading-tight font-medium text-stone-600">{row.issues.join(' ')}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {importStep === 'uploading' && (
+                  <div className="py-16 flex flex-col items-center justify-center text-center gap-4">
+                    <RefreshCw className="h-12 w-12 animate-spin text-primary opacity-80" />
+                    <h4 className="font-serif text-lg text-primary font-bold">Procesando Importación...</h4>
+                    <p className="text-xs text-[#8a8d86] max-w-sm">
+                      Limpiando base de datos previa y subiendo las nuevas invitaciones en bloques optimizados.
+                    </p>
+                    <div className="w-full max-w-xs bg-stone-100 rounded-full h-2 mt-2 overflow-hidden border">
+                      <div
+                        className="bg-primary h-full transition-all duration-300 rounded-full"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-mono text-[#44483f] font-bold">{uploadProgress}% Completado</span>
+                  </div>
+                )}
+
+                {importStep === 'success' && (
+                  <div className="py-16 flex flex-col items-center justify-center text-center gap-4">
+                    <div className="h-16 w-16 bg-[#e7f2da] rounded-full flex items-center justify-center text-primary mb-2 shadow-inner">
+                      <CheckCircle className="h-10 w-10 text-primary" />
+                    </div>
+                    <h4 className="font-serif text-2xl text-primary font-bold">¡Carga Exitosa!</h4>
+                    <p className="text-xs text-[#44483f] max-w-md leading-relaxed">
+                      Se han importado exitosamente las <strong>{validationReport.length}</strong> invitaciones en la base de datos de Supabase. El panel se actualizará automáticamente.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Overwrite Confirmation Overlay */}
+              {isOverwriteConfirmed && importStep === 'preview' && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-20">
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-white rounded-2xl border border-red-200 shadow-2xl p-6 max-w-md w-full text-center"
+                  >
+                    <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-3" />
+                    <h4 className="font-serif text-lg text-[#2C3525] font-bold mb-2">¿Confirmar Sobrescribir Base de Datos?</h4>
+                    <p className="text-xs text-[#44483f] leading-relaxed mb-4">
+                      Esta operación es irreversible. Al continuar, se <strong>borrarán permanentemente</strong> todas las invitaciones y los RSVPs/confirmaciones actuales en Supabase.
+                    </p>
+                    <div className="flex flex-col gap-2 text-left mb-5">
+                      <label htmlFor="confirm-phrase" className="text-[10px] font-bold text-[#8a8d86] uppercase tracking-wider">
+                        Escribe <span className="text-red-600 font-bold select-all">SOBRESCRIBIR</span> para autorizar:
+                      </label>
+                      <input
+                        id="confirm-phrase"
+                        type="text"
+                        value={overwriteText}
+                        onChange={e => setOverwriteText(e.target.value)}
+                        placeholder="Escribe la palabra de confirmación"
+                        className="w-full px-3 py-2 text-xs bg-[#FBFBFA] border border-red-200 rounded-lg focus:ring-0 focus:border-red-500 font-bold text-center uppercase text-red-700 tracking-wider animate-pulse"
+                      />
+                    </div>
+                    <div className="flex gap-3 justify-end">
+                      <button
+                        onClick={() => { setIsOverwriteConfirmed(false); setOverwriteText(''); }}
+                        className="flex-1 px-4 py-2 bg-stone-100 hover:bg-stone-200 rounded-xl text-xs font-semibold text-[#566247] transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={executeImportUpload}
+                        disabled={overwriteText.trim().toUpperCase() !== 'SOBRESCRIBIR'}
+                        className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50 shadow-sm"
+                      >
+                        Confirmar y Borrar
+                      </button>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+
+              {/* Footer */}
+              <div className="p-6 border-t border-[#D1C4B0]/20 bg-[#FBFBFA] flex justify-end gap-3 flex-shrink-0">
+                {importStep === 'input' && (
+                  <>
+                    <button
+                      onClick={() => setIsImportModalOpen(false)}
+                      className="px-5 py-2 text-xs font-semibold text-[#566247] hover:bg-[#F2EFE9]/50 rounded-xl transition-colors border border-transparent hover:border-[#D1C4B0]/40"
+                    >
+                      Cerrar
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (importTab === 'paste') {
+                          if (pasteText.trim().length === 0) {
+                            setImportError('Por favor pega el contenido de tus celdas.');
+                            return;
+                          }
+                          processAndValidateData(pasteText);
+                        }
+                      }}
+                      disabled={importTab === 'file' && !selectedFile}
+                      className="bg-primary hover:bg-[#384c2b] text-white px-6 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm disabled:opacity-50"
+                    >
+                      Validar Datos
+                    </button>
+                  </>
+                )}
+
+                {importStep === 'preview' && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setImportStep('input');
+                        setImportError(null);
+                        setSelectedFile(null);
+                      }}
+                      className="px-5 py-2 text-xs font-semibold text-[#566247] hover:bg-[#F2EFE9]/50 rounded-xl transition-colors border border-transparent hover:border-[#D1C4B0]/40"
+                    >
+                      Atrás
+                    </button>
+                    <button
+                      onClick={() => setIsOverwriteConfirmed(true)}
+                      disabled={importStats.errors > 0}
+                      className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+                    >
+                      Confirmar y Subir ({importStats.total} filas)
+                    </button>
+                  </>
+                )}
+
+                {importStep === 'success' && (
+                  <button
+                    onClick={() => setIsImportModalOpen(false)}
+                    className="bg-primary hover:bg-[#384c2b] text-white px-6 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm"
+                  >
+                    Terminar
+                  </button>
+                )}
               </div>
             </motion.div>
           </div>
