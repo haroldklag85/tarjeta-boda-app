@@ -9,6 +9,7 @@ import Location from './pages/Location';
 import RSVP from './pages/RSVP';
 import Info from './pages/Info';
 import AdminPanel from './pages/AdminPanel';
+import SharePhotos from './pages/SharePhotos';
 import DesktopBlocker from './components/DesktopBlocker';
 import { useIsDesktop } from './hooks/useIsDesktop';
 import ScrollToTop from './components/ScrollToTop';
@@ -30,7 +31,7 @@ export default function App() {
 
     if (!code) {
       const path = window.location.pathname.replace(/^\/|\/$/g, '');
-      const reservedRoutes = ['ubicacion', 'rsvp', 'info', 'admin-panel'];
+      const reservedRoutes = ['ubicacion', 'rsvp', 'info', 'admin-panel', 'compartir-fotos'];
       if (path && !reservedRoutes.includes(path) && !path.includes('/')) {
         code = path;
       }
@@ -98,6 +99,7 @@ export default function App() {
 
       <Routes>
         <Route path="/admin-panel" element={<AdminPanel />} />
+        <Route path="/compartir-fotos" element={<SharePhotos />} />
         
         {/* When envelope is open, render app layout and routes */}
         {isEnvelopeOpen && (

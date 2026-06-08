@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
-import { Users, CheckCircle, XCircle, Download, Search, RefreshCw, Key, Check, MessageSquare, Link, FileText, Send, AlertTriangle, Music, Heart } from 'lucide-react';
+import { Users, CheckCircle, XCircle, Download, Search, RefreshCw, Key, Check, MessageSquare, Link, FileText, Send, AlertTriangle, Music, Heart, Image as ImageIcon } from 'lucide-react';
 
 interface RSVPRecord {
   id: string;
@@ -34,10 +34,11 @@ interface InvitationRecord {
 
 export default function AdminPanel() {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<'rsvps' | 'links' | 'special'>('rsvps');
+  const [activeTab, setActiveTab] = useState<'rsvps' | 'links' | 'special' | 'photos'>('rsvps');
   const [loading, setLoading] = useState(true);
   const [rsvps, setRsvps] = useState<RSVPRecord[]>([]);
   const [invitations, setInvitations] = useState<InvitationRecord[]>([]);
+  const [photoUploads, setPhotoUploads] = useState<any[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
   const [password, setPassword] = useState('');
@@ -47,6 +48,7 @@ export default function AdminPanel() {
   const [rsvpSearch, setRsvpSearch] = useState('');
   const [linkSearch, setLinkSearch] = useState('');
   const [specialSearch, setSpecialSearch] = useState('');
+  const [photoSearch, setPhotoSearch] = useState('');
   
   const [stats, setStats] = useState({
     totalInvitations: 0,
@@ -180,6 +182,20 @@ export default function AdminPanel() {
         invData = testData;
       }
       setInvitations((invData || []) as InvitationRecord[]);
+
+      // 3. Fetch Photo Uploads (with fallback if photo_uploads table is not created yet)
+      try {
+        const { data: photoData, error: photoError } = await supabase
+          .from('photo_uploads')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (photoError) throw photoError;
+        setPhotoUploads(photoData || []);
+      } catch (photoErr) {
+        console.warn('Could not fetch photo_uploads. Make sure to run SQL command to create the table.', photoErr);
+        setPhotoUploads([]);
+      }
 
     } catch (err) {
       console.error('Error fetching admin data:', err);
@@ -439,7 +455,7 @@ export default function AdminPanel() {
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Actualizar
             </button>
-            {activeTab !== 'special' && (
+            {activeTab !== 'special' && activeTab !== 'photos' && (
               <button
                 onClick={activeTab === 'rsvps' ? exportRsvps : exportLinks}
                 disabled={loading || (activeTab === 'rsvps' ? rsvps.length === 0 : invitations.length === 0)}
@@ -471,6 +487,12 @@ export default function AdminPanel() {
             className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'special' ? 'border-primary text-primary' : 'border-transparent text-[#8a8d86] hover:text-[#2C3525]'}`}
           >
             Detalles de Invitados (Especiales)
+          </button>
+          <button
+            onClick={() => setActiveTab('photos')}
+            className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'photos' ? 'border-primary text-primary' : 'border-transparent text-[#8a8d86] hover:text-[#2C3525]'}`}
+          >
+            Fotos de Invitados (Google Drive)
           </button>
         </div>
 
@@ -943,6 +965,117 @@ export default function AdminPanel() {
                           </tr>
                         );
                       })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'photos' && (
+          <div className="flex flex-col gap-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+              <div className="bg-white p-5 rounded-xl border border-[#D1C4B0]/40 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">Total de Fotos Recibidas</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-2xl font-bold text-primary">
+                    {photoUploads.reduce((sum, p) => sum + (p.photo_count || 0), 0)}
+                  </span>
+                  <ImageIcon className="h-5 w-5 text-primary opacity-80" />
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-xl border border-[#D1C4B0]/40 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">Invitados que Compartieron</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-2xl font-bold text-[#C49550]">
+                    {new Set(photoUploads.map(p => p.guest_name.toLowerCase().trim())).size}
+                  </span>
+                  <Users className="h-5 w-5 text-[#C49550] opacity-80" />
+                </div>
+              </div>
+            </div>
+
+            {/* Folder integration instructions & button */}
+            <div className="bg-white rounded-xl border border-[#D1C4B0]/40 shadow-sm p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="flex-1">
+                <h3 className="font-serif text-lg text-primary font-bold mb-2">Carpeta Compartida de Google Drive</h3>
+                <p className="text-xs text-[#44483f] leading-relaxed max-w-3xl">
+                  Las fotos se guardan directamente en tu cuenta de Google Drive en la carpeta <strong>"Fotos Boda Harold y Anay"</strong>. Los archivos se nombran automáticamente con el nombre del invitado y la fecha para facilitar su clasificación.
+                </p>
+              </div>
+              <a
+                href="https://drive.google.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 bg-[#e7f2da] hover:bg-[#d7e5c2] text-primary px-4 py-2.5 rounded font-semibold text-xs transition-colors shadow-sm self-start md:self-auto whitespace-nowrap"
+              >
+                <Download className="h-4 w-4" />
+                Ir a mi Google Drive
+              </a>
+            </div>
+
+            {/* Table wrapper */}
+            <div className="bg-white rounded-xl border border-[#D1C4B0]/40 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-[#D1C4B0]/30 bg-[#FBFBFA] flex flex-col sm:flex-row justify-between gap-4">
+                <div className="relative w-full max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a8d86] h-4 w-4" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre del invitado..."
+                    value={photoSearch}
+                    onChange={e => setPhotoSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-[#D1C4B0] rounded focus:ring-0 focus:border-primary placeholder-[#c4c8bc] transition-colors"
+                  />
+                </div>
+                <div className="text-xs font-semibold text-[#566247] flex items-center bg-[#e7f2da] px-3 py-2 rounded border border-primary/5">
+                  Total Subidas: {photoUploads.length} lotes
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="py-20 text-center text-[#8a8d86]">
+                  <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
+                  Cargando trazabilidad de fotos...
+                </div>
+              ) : photoUploads.length === 0 ? (
+                <div className="py-20 text-center text-[#8a8d86]">
+                  Aún no se han registrado cargas de fotos de los invitados. Asegúrate de que los invitados escaneen el código QR del evento.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-[#FBFBFA] border-b border-[#D1C4B0]/30 text-xs font-semibold text-[#566247] uppercase tracking-wider">
+                        <th className="p-4">Invitado</th>
+                        <th className="p-4">Código de Invitación</th>
+                        <th className="p-4 text-center">Fotos Aportadas</th>
+                        <th className="p-4 text-right">Fecha / Hora de Carga</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#D1C4B0]/20 text-[#44483f]">
+                      {photoUploads
+                        .filter(p => p.guest_name.toLowerCase().includes(photoSearch.toLowerCase()))
+                        .map((p) => (
+                          <tr key={p.id} className="hover:bg-[#FDFDFD] transition-colors">
+                            <td className="p-4 font-semibold text-[#2C3525]">
+                              {p.guest_name}
+                            </td>
+                            <td className="p-4 font-mono text-xs">
+                              {p.invitation_code || <span className="text-[#c4c8bc] italic">Acceso QR Directo</span>}
+                            </td>
+                            <td className="p-4 text-center">
+                              <span className="bg-[#e7f2da] text-primary font-bold px-2.5 py-0.5 rounded text-xs">
+                                +{p.photo_count} {p.photo_count === 1 ? 'foto' : 'fotos'}
+                              </span>
+                            </td>
+                            <td className="p-4 text-right text-xs text-[#8a8d86] font-mono">
+                              {new Date(p.created_at).toLocaleString('es-ES')}
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
