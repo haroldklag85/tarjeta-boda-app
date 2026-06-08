@@ -21,6 +21,7 @@ export default function App() {
   
   const isDesktop = useIsDesktop(1024);
   const isAdminRoute = window.location.pathname.includes('/admin-panel');
+  const isSharePhotosRoute = window.location.pathname.includes('/compartir-fotos');
 
   // Capture invitation code from URL query or path parameter and pre-fetch details
   useEffect(() => {
@@ -76,7 +77,7 @@ export default function App() {
     }
   }, [isAdminRoute]);
 
-  if (isDesktop && !isAdminRoute) {
+  if (isDesktop && !isAdminRoute && !isSharePhotosRoute) {
     return <DesktopBlocker />;
   }
 
@@ -84,7 +85,7 @@ export default function App() {
     <BrowserRouter>
       <ScrollToTop />
       
-      {!isAdminRoute && !isEnvelopeOpen && (
+      {!isAdminRoute && !isSharePhotosRoute && !isEnvelopeOpen && (
         <>
           {!isLoaded && <Preloader onLoaded={() => setIsLoaded(true)} />}
           <AnimatePresence>
