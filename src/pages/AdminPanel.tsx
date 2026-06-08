@@ -993,7 +993,7 @@ export default function AdminPanel() {
         {activeTab === 'links' && (
           <div className="flex flex-col gap-6">
             {/* Stats Cards for Enlaces tab */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white p-5 rounded-xl border border-[#D1C4B0]/40 shadow-sm flex flex-col justify-between">
                 <span className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">Total Sobres / Invitaciones</span>
                 <div className="flex items-baseline gap-2 mt-2">
@@ -1022,6 +1022,26 @@ export default function AdminPanel() {
                     })()}
                   </span>
                   <AlertTriangle className="h-4 w-4 text-amber-600 opacity-80" />
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-xl border border-[#D1C4B0]/40 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-[#8a8d86] uppercase tracking-wider">Pendientes de Envío (WhatsApp)</span>
+                <div className="flex items-end justify-between mt-2">
+                  {(() => {
+                    const unsentInvs = invitations.filter(inv => !inv.whatsapp_sent_at);
+                    const unsentCount = unsentInvs.length;
+                    const unsentPeople = unsentInvs.reduce((sum, i) => sum + (i.max_guests || 0), 0);
+                    return (
+                      <div className="flex flex-col">
+                        <span className="text-2xl font-bold text-[#2C3525]">{unsentCount} {unsentCount === 1 ? 'sobre' : 'sobres'}</span>
+                        <span className="text-xs font-medium text-[#8a8d86] mt-1">
+                          {unsentPeople} {unsentPeople === 1 ? 'pase' : 'pases'} sin enviar
+                        </span>
+                      </div>
+                    );
+                  })()}
+                  <Send className="h-4 w-4 text-slate-400 opacity-80 mb-1" />
                 </div>
               </div>
             </div>
