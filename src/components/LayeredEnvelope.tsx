@@ -509,7 +509,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
                 transition={{ duration: 0.6 }}
               >
                 <p className="text-[10px] text-[#2C3525] font-bold font-sans tracking-[0.2em] uppercase animate-pulse">
-                  Clic para continuar
+                  Toca para continuar
                 </p>
               </motion.div>
             )}
