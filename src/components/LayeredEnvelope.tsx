@@ -52,6 +52,8 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
   const [typewriterText, setTypewriterText] = useState('');
   const [isZoomed, setIsZoomed] = useState(false);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const [hasPausedForContinue, setHasPausedForContinue] = useState(false);
+  const [isPausedForContinue, setIsPausedForContinue] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const typewriterIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cardControls = useAnimation();
@@ -148,8 +150,15 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
       setEnvelopeTextVisible(true);
     } else if (t >= textEndTime) {
       setEnvelopeTextVisible(false);
+      
+      // Pause exactly before envelope starts rotating
+      if (!hasPausedForContinue) {
+        v.pause();
+        setHasPausedForContinue(true);
+        setIsPausedForContinue(true);
+      }
     }
-  }, [phase]);
+  }, [phase, hasPausedForContinue]);
 
   const handleSealTap = useCallback(() => {
     if (phase !== 'sealed') return;
@@ -160,6 +169,8 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
     // Break the seal
     setPhase('breaking');
     setSealBroken(true);
+    setHasPausedForContinue(false);
+    setIsPausedForContinue(false);
 
     // After seal animation, play the video
     setTimeout(() => {
@@ -182,9 +193,17 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
   }, [phase]);
 
   const handleVideoEnd = useCallback(() => {
-    // Video finished — stay on last frame, show card, wait for user click
+    // Video finished — stay on last frame, show card
     setPhase('open');
-  }, []);
+
+    setTimeout(() => {
+      setPhase('pulling');
+      cardControls.start({
+        y: '-6%',
+        transition: { duration: 0.5 }
+      });
+    }, 600);
+  }, [cardControls]);
 
   const handleCardDragEnd = useCallback(
     (_e: any, info: any) => {
@@ -209,6 +228,15 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
     [phase, cardControls, onOpenComplete]
   );
 
+  const handleResumePlayback = () => {
+    if (!isPausedForContinue) return;
+    setIsPausedForContinue(false);
+    const v = videoRef.current;
+    if (v) {
+      v.play().catch(err => console.error("Error resuming video playback:", err));
+    }
+  };
+
   const isSealed = phase === 'sealed' || phase === 'breaking';
   const isOpen = phase === 'open' || phase === 'pulling';
 
@@ -219,6 +247,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
       animate={{ scale: isZoomed ? 1.8 : 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
+      onClick={handleResumePlayback}
     >
 
       {/* ═══════════════════════════════════════════
@@ -446,13 +475,7 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
             dragElastic={0.1}
             onDragEnd={handleCardDragEnd}
             onClick={() => {
-              if (phase === 'open') {
-                setPhase('pulling');
-                cardControls.start({
-                  y: '-6%',
-                  transition: { duration: 0.5 }
-                });
-              } else if (phase === 'pulling') {
+              if (phase === 'pulling') {
                 setIsZoomed(!isZoomed);
               }
             }}
@@ -500,27 +523,13 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
             </motion.div>
 
             {/* Drag / Zoom hints */}
-            {phase === 'open' && (
-              <motion.div
-                className="absolute left-0 right-0 flex flex-col items-center gap-2 pointer-events-none"
-                style={{ bottom: '12%' }}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <p className="text-[10px] text-[#2C3525] font-bold font-sans tracking-[0.2em] uppercase animate-pulse">
-                  Toca para continuar
-                </p>
-              </motion.div>
-            )}
-
             {phase === 'pulling' && !isZoomed && (
               <motion.div
                 className="absolute left-0 right-0 flex flex-col items-center gap-2 pointer-events-none"
                 style={{ bottom: '12%' }}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.6 }}
+                transition={{ delay: 1, duration: 0.6 }}
               >
                 <p className="text-[10px] text-[#2C3525] font-bold font-sans tracking-[0.2em] uppercase">
                   Toca para acercar 🔍
@@ -542,6 +551,24 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
               </motion.p>
             )}
           </motion.div>
+        </motion.div>
+      )}
+
+      {/* Pause indicator — "Toque para continuar" */}
+      {isPausedForContinue && (
+        <motion.div
+          className="absolute left-0 right-0 flex flex-col items-center pointer-events-none z-30"
+          style={{ bottom: '12%' }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: [0.4, 1, 0.4], y: 0 }}
+          transition={{ 
+            opacity: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+            y: { duration: 0.6 }
+          }}
+        >
+          <p className="text-[10px] text-[#2C3525] font-bold font-sans tracking-[0.2em] uppercase">
+            Toque para continuar
+          </p>
         </motion.div>
       )}
     </motion.div>
