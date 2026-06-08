@@ -73,58 +73,67 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
     setDownloading(true);
     const actionButtons = letterRef.current.querySelector('.action-buttons') as HTMLElement;
     
+    const originalStyles: { el: HTMLStyleElement; text: string }[] = [];
+    const linksToRestore: { linkTag: HTMLLinkElement; styleTag: HTMLStyleElement }[] = [];
+    
     try {
       if (actionButtons) actionButtons.style.opacity = '0';
 
+      // 1. Sanitize all <style> tags in the main document before html2canvas initializes
+      document.querySelectorAll('style').forEach((styleTag) => {
+        try {
+          originalStyles.push({ el: styleTag, text: styleTag.innerHTML });
+          let cssText = styleTag.innerHTML;
+          if (cssText.includes('oklch') || cssText.includes('oklab')) {
+            cssText = cssText.replace(/oklch\([^\)]*\)/gi, '#566247');
+            cssText = cssText.replace(/oklab\([^\)]*\)/gi, '#566247');
+            styleTag.innerHTML = cssText;
+          }
+        } catch (e) {
+          console.warn('Error sanitizing inline style tag:', e);
+        }
+      });
+
+      // 2. Sanitize all <link rel="stylesheet"> tags in the main document
+      document.querySelectorAll('link[rel="stylesheet"]').forEach((linkTag) => {
+        const linkElem = linkTag as HTMLLinkElement;
+        const href = linkElem.href;
+        if (href && href.includes(window.location.origin)) {
+          try {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', href, false); // Synchronous request
+            xhr.send(null);
+            if (xhr.status === 200) {
+              let cssText = xhr.responseText;
+              cssText = cssText.replace(/oklch\([^\)]*\)/gi, '#566247');
+              cssText = cssText.replace(/oklab\([^\)]*\)/gi, '#566247');
+              
+              const styleTag = document.createElement('style');
+              styleTag.innerHTML = cssText;
+              styleTag.setAttribute('data-sanitized-link', 'true');
+              document.head.appendChild(styleTag);
+              
+              linkElem.disabled = true;
+              linksToRestore.push({ linkTag: linkElem, styleTag });
+            }
+          } catch (e) {
+            console.warn('Failed to fetch/sanitize stylesheet:', href, e);
+          }
+        }
+      });
+
+      // 3. Render the card to canvas using html2canvas
       const canvas = await html2canvas(letterRef.current, {
         useCORS: true,
         scale: 2, // 2x resolution is perfect for PDF performance
         backgroundColor: '#f5efe6',
         logging: false,
-        onclone: (clonedDoc, clonedLetter) => {
-          // 1. Hide action buttons in cloned doc
+        onclone: (_, clonedLetter) => {
+          // Hide action buttons in cloned doc
           const clonedButtons = clonedLetter.querySelector('.action-buttons') as HTMLElement;
           if (clonedButtons) clonedButtons.style.display = 'none';
 
-          // 2. Sanitize oklch/oklab in all `<style>` elements to prevent html2canvas crashes
-          clonedDoc.querySelectorAll('style').forEach(styleTag => {
-            try {
-              let cssText = styleTag.innerHTML;
-              if (cssText.includes('oklch') || cssText.includes('oklab')) {
-                cssText = cssText.replace(/oklch\([^\)]*\)/g, '#566247');
-                cssText = cssText.replace(/oklab\([^\)]*\)/g, '#566247');
-                styleTag.innerHTML = cssText;
-              }
-            } catch (e) {
-              console.warn('Error sanitizing inline style tag:', e);
-            }
-          });
-
-          // 3. Fetch, sanitize, and convert all local `<link rel="stylesheet">` elements to `<style>` tags
-          clonedDoc.querySelectorAll('link[rel="stylesheet"]').forEach(linkTag => {
-            const href = (linkTag as HTMLLinkElement).href;
-            if (href && href.includes(window.location.origin)) {
-              try {
-                const xhr = new XMLHttpRequest();
-                xhr.open('GET', href, false); // Synchronous request on cloned iframe context
-                xhr.send(null);
-                if (xhr.status === 200) {
-                  let cssText = xhr.responseText;
-                  cssText = cssText.replace(/oklch\([^\)]*\)/g, '#566247');
-                  cssText = cssText.replace(/oklab\([^\)]*\)/g, '#566247');
-                  
-                  const styleTag = clonedDoc.createElement('style');
-                  styleTag.innerHTML = cssText;
-                  clonedDoc.head.appendChild(styleTag);
-                  linkTag.remove();
-                }
-              } catch (e) {
-                console.warn('Failed to fetch/sanitize stylesheet:', href, e);
-              }
-            }
-          });
-
-          // 4. Force US Letter aspect ratio and scaling on the cloned letter container
+          // Force US Letter aspect ratio and scaling on the cloned letter container
           if (clonedLetter) {
             // US Letter width: 8.5in * 96px = 816px. Height is dynamic (auto) to support long letters.
             clonedLetter.style.width = '816px';
@@ -250,6 +259,24 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
     } catch (err) {
       console.error('Error exporting nostalgic letter to PDF:', err);
     } finally {
+      // Restore original stylesheets in the main document
+      originalStyles.forEach(({ el, text }) => {
+        try {
+          el.innerHTML = text;
+        } catch (e) {
+          console.warn('Error restoring style tag:', e);
+        }
+      });
+      
+      linksToRestore.forEach(({ linkTag, styleTag }) => {
+        try {
+          linkTag.disabled = false;
+          styleTag.remove();
+        } catch (e) {
+          console.warn('Error restoring link tag:', e);
+        }
+      });
+
       if (actionButtons) actionButtons.style.opacity = '1';
       setDownloading(false);
     }
