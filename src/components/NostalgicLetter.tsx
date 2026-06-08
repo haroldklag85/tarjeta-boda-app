@@ -325,7 +325,7 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
             }}
           >
             <p className="whitespace-pre-line">
-              {message}
+              {message.replace(/\\n/g, '\n')}
             </p>
           </div>
  

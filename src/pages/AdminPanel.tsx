@@ -314,8 +314,8 @@ export default function AdminPanel() {
       ['3107654321', 'Juan Gómez', '1', 'Juan, esperamos de todo corazón que puedas acompañarnos a celebrar nuestro gran día.']
     ];
     const csvContent = '\uFEFF' + [
-      headers.join(','),
-      ...sampleRows.map(row => row.map(val => `"${val.replace(/"/g, '""')}"`).join(','))
+      headers.join(';'),
+      ...sampleRows.map(row => row.map(val => `"${val.replace(/"/g, '""')}"`).join(';'))
     ].join('\n');
     triggerDownload(csvContent, 'plantilla_invitaciones_bulk.csv');
   };
