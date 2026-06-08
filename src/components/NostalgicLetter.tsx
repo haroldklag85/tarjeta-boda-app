@@ -236,10 +236,33 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
     }
   };
 
+  const len = message.length;
+  let fontSize = 'clamp(21px, 5.8vw, 26px)';
+  let lineHeight = '1.45';
+  let paddingY = 'py-4';
+  let contentSpacing = 'mt-12 mb-6';
+
+  if (len > 2500) {
+    fontSize = 'clamp(15px, 4.2vw, 17px)';
+    lineHeight = '1.3';
+    paddingY = 'py-1';
+    contentSpacing = 'mt-6 mb-2';
+  } else if (len > 1500) {
+    fontSize = 'clamp(17px, 4.5vw, 19px)';
+    lineHeight = '1.35';
+    paddingY = 'py-2';
+    contentSpacing = 'mt-8 mb-3';
+  } else if (len > 800) {
+    fontSize = 'clamp(19px, 5vw, 22px)';
+    lineHeight = '1.4';
+    paddingY = 'py-3';
+    contentSpacing = 'mt-10 mb-4';
+  }
+
   return (
     <motion.div
       ref={backdropRef}
-      className="fixed inset-0 w-full h-full bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[999] overflow-y-auto"
+      className="fixed inset-0 w-full h-full bg-black/85 backdrop-blur-md flex justify-center p-4 z-[999] overflow-y-auto items-start sm:items-center py-8 sm:py-12"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -249,7 +272,7 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
       <motion.div
         ref={letterRef}
         id="nostalgic-letter-paper"
-        className="relative w-full max-w-[360px] sm:max-w-md bg-[#f5efe6] shadow-[0_20px_60px_rgba(0,0,0,0.5),_inset_0_0_50px_rgba(77,55,37,0.2)] border border-[#e8dfcf] p-8 pb-10 flex flex-col justify-between"
+        className="relative w-full max-w-[360px] sm:max-w-md bg-[#f5efe6] shadow-[0_20px_60px_rgba(0,0,0,0.5),_inset_0_0_50px_rgba(77,55,37,0.2)] border border-[#e8dfcf] p-8 pb-10 flex flex-col justify-between my-auto flex-shrink-0"
         style={{
           perspective: 1200,
           transformStyle: 'preserve-3d',
@@ -311,14 +334,14 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
         <div className="absolute top-[40%] right-[-10px] w-24 h-24 bg-[#8b6b4e]/10 rounded-full blur-2xl pointer-events-none" />
  
         {/* Letter Content */}
-        <div className="mt-12 mb-6 flex-1 flex flex-col justify-between">
+        <div className={`${contentSpacing} flex-grow flex-1 flex flex-col justify-between`}>
           {/* Main Body with Caveat Font (Legible, real handwriting look) */}
           <div 
-            className="letter-body-text text-[#4d3725] px-3 flex-grow flex items-center justify-center text-center py-4"
+            className={`letter-body-text text-[#4d3725] px-3 flex-grow flex items-center justify-center text-center ${paddingY}`}
             style={{
               fontFamily: '"Caveat", cursive',
-              fontSize: 'clamp(21px, 5.8vw, 26px)',
-              lineHeight: '1.45',
+              fontSize: fontSize,
+              lineHeight: lineHeight,
               mixBlendMode: 'multiply',
               wordBreak: 'break-word',
               textShadow: '0.4px 0.4px 0px rgba(255,255,255,0.7)'
