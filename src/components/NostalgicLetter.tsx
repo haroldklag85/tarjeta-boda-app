@@ -126,9 +126,9 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
 
           // 4. Force US Letter aspect ratio and scaling on the cloned letter container
           if (clonedLetter) {
-            // US Letter width: 8.5in * 96px = 816px, height: 11in * 96px = 1056px
+            // US Letter width: 8.5in * 96px = 816px. Height is dynamic (auto) to support long letters.
             clonedLetter.style.width = '816px';
-            clonedLetter.style.height = '1056px';
+            clonedLetter.style.height = 'auto'; // Dynamic height
             clonedLetter.style.maxWidth = 'none';
             clonedLetter.style.transform = 'none';
             clonedLetter.style.rotate = 'none';
@@ -137,12 +137,35 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
             clonedLetter.style.clipPath = 'none'; // Borderless print looks much better
             clonedLetter.style.borderRadius = '0';
             
-            // Adjust body text font size and style for US Letter page
+            // Adjust body text font size dynamically based on message length for high readability and fit
             const textContainer = clonedLetter.querySelector('.letter-body-text') as HTMLElement;
             if (textContainer) {
-              textContainer.style.fontSize = '38px';
-              textContainer.style.lineHeight = '1.6';
-              textContainer.style.padding = '80px 20px 40px 20px';
+              let fontSize = '38px';
+              let lineHeight = '1.6';
+              const len = message.length;
+              
+              if (len > 3500) {
+                fontSize = '18px';
+                lineHeight = '1.45';
+              } else if (len > 2000) {
+                fontSize = '22px';
+                lineHeight = '1.5';
+              } else if (len > 1000) {
+                fontSize = '26px';
+                lineHeight = '1.5';
+              } else if (len > 600) {
+                fontSize = '32px';
+                lineHeight = '1.55';
+              }
+              
+              textContainer.style.fontSize = fontSize;
+              textContainer.style.lineHeight = lineHeight;
+              
+              if (len > 1000) {
+                textContainer.style.padding = '100px 30px 40px 30px';
+              } else {
+                textContainer.style.padding = '80px 20px 40px 20px';
+              }
             }
 
             // Adjust postmark/stamp position and scale
@@ -177,6 +200,10 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
       });
 
       // Create PDF
+      const imgWidth = 8.5; // US Letter width in inches
+      const pageHeight = 11; // US Letter height in inches
+      const imgHeight = (canvas.height / canvas.width) * imgWidth;
+      
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -184,8 +211,22 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
         format: 'letter'
       });
 
-      // Add image to cover the entire page (0 margin borderless format)
-      pdf.addImage(imgData, 'JPEG', 0, 0, 8.5, 11);
+      let position = 0;
+      
+      // Page 1
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      
+      // Subsequent pages (sliced dynamically)
+      let remainingHeight = imgHeight - pageHeight;
+      let pageNum = 1;
+      while (remainingHeight > 0) {
+        pdf.addPage();
+        position = -(pageNum * pageHeight);
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        remainingHeight -= pageHeight;
+        pageNum++;
+      }
+      
       pdf.save('nuestra_carta_de_boda.pdf');
     } catch (err) {
       console.error('Error exporting nostalgic letter to PDF:', err);
