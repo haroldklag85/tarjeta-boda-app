@@ -241,7 +241,7 @@ export default function RSVP() {
         <Mail className="text-[#D1C4B0] mb-3" size={32} strokeWidth={1.5} />
         <h1 className="text-[2.25rem] font-serif text-[#2C3525] mb-3">Asistencia</h1>
         <p className="text-[1rem] text-[#44483f] mb-12 max-w-sm">
-          Por favor confírmanos tu presencia para este día tan especial.
+          Para organizar cada detalle con el cariño que este día merece, te agradecemos confirmar tu asistencia antes del <strong>20 de julio</strong>.
         </p>
 
         {loading ? (
