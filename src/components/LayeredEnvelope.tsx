@@ -182,17 +182,9 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
   }, [phase]);
 
   const handleVideoEnd = useCallback(() => {
-    // Video finished — stay on last frame, show card
+    // Video finished — stay on last frame, show card, wait for user click
     setPhase('open');
-
-    setTimeout(() => {
-      setPhase('pulling');
-      cardControls.start({
-        y: '-6%',
-        transition: { duration: 0.5 }
-      });
-    }, 600);
-  }, [cardControls]);
+  }, []);
 
   const handleCardDragEnd = useCallback(
     (_e: any, info: any) => {
@@ -454,7 +446,13 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
             dragElastic={0.1}
             onDragEnd={handleCardDragEnd}
             onClick={() => {
-              if (phase === 'pulling') {
+              if (phase === 'open') {
+                setPhase('pulling');
+                cardControls.start({
+                  y: '-6%',
+                  transition: { duration: 0.5 }
+                });
+              } else if (phase === 'pulling') {
                 setIsZoomed(!isZoomed);
               }
             }}
@@ -502,13 +500,27 @@ export default function LayeredEnvelope({ onOpenComplete }: LayeredEnvelopeProps
             </motion.div>
 
             {/* Drag / Zoom hints */}
+            {phase === 'open' && (
+              <motion.div
+                className="absolute left-0 right-0 flex flex-col items-center gap-2 pointer-events-none"
+                style={{ bottom: '12%' }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <p className="text-[10px] text-[#2C3525] font-bold font-sans tracking-[0.2em] uppercase animate-pulse">
+                  Clic para continuar
+                </p>
+              </motion.div>
+            )}
+
             {phase === 'pulling' && !isZoomed && (
               <motion.div
                 className="absolute left-0 right-0 flex flex-col items-center gap-2 pointer-events-none"
                 style={{ bottom: '12%' }}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1, duration: 0.6 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
               >
                 <p className="text-[10px] text-[#2C3525] font-bold font-sans tracking-[0.2em] uppercase">
                   Toca para acercar 🔍
