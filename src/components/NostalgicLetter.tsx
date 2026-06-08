@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, X } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
 
 interface NostalgicLetterProps {
@@ -13,6 +13,8 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
   const letterRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const [generating, setGenerating] = useState(true);
+  const [pdfData, setPdfData] = useState<{ file: File; pdf: jsPDF; blob: Blob } | null>(null);
 
   useEffect(() => {
     // 1. Dispatch custom event to tell MainLayout to hide header, nav, and footer
@@ -45,9 +47,140 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
 
     const timer = setTimeout(enterFullscreen, 100);
 
-    // Clean up event and exit fullscreen on unmount
+    // 4. Pre-generate the PDF in the background after the unfold animation stabilizes
+    const generateTimer = setTimeout(async () => {
+      if (!letterRef.current) return;
+      try {
+        // html2canvas-pro supports modern colors oklch/oklab/color-mix, so no sanitization needed!
+        const canvas = await html2canvas(letterRef.current, {
+          useCORS: true,
+          scale: 2, // 2x resolution is perfect for PDF performance
+          backgroundColor: '#f5efe6',
+          logging: false,
+          onclone: (_, clonedLetter) => {
+            // Hide action buttons in cloned doc
+            const clonedButtons = clonedLetter.querySelector('.action-buttons') as HTMLElement;
+            if (clonedButtons) clonedButtons.style.display = 'none';
+
+            // Force US Letter aspect ratio and scaling on the cloned letter container
+            if (clonedLetter) {
+              // US Letter width: 8.5in * 96px = 816px. Height is dynamic (auto) to support long letters.
+              clonedLetter.style.width = '816px';
+              clonedLetter.style.height = 'auto'; // Dynamic height
+              clonedLetter.style.maxWidth = 'none';
+              clonedLetter.style.transform = 'none';
+              clonedLetter.style.rotate = 'none';
+              clonedLetter.style.margin = '0';
+              clonedLetter.style.padding = '72px 56px 56px 56px';
+              clonedLetter.style.clipPath = 'none'; // Borderless print looks much better
+              clonedLetter.style.borderRadius = '0';
+              
+              // Adjust body text font size dynamically based on message length for high readability and fit
+              const textContainer = clonedLetter.querySelector('.letter-body-text') as HTMLElement;
+              if (textContainer) {
+                let fontSize = '38px';
+                let lineHeight = '1.6';
+                const len = message.length;
+                
+                if (len > 3500) {
+                  fontSize = '18px';
+                  lineHeight = '1.45';
+                } else if (len > 2000) {
+                  fontSize = '22px';
+                  lineHeight = '1.5';
+                } else if (len > 1000) {
+                  fontSize = '26px';
+                  lineHeight = '1.5';
+                } else if (len > 600) {
+                  fontSize = '32px';
+                  lineHeight = '1.55';
+                }
+                
+                textContainer.style.fontSize = fontSize;
+                textContainer.style.lineHeight = lineHeight;
+                
+                if (len > 1000) {
+                  textContainer.style.padding = '100px 30px 40px 30px';
+                } else {
+                  textContainer.style.padding = '80px 20px 40px 20px';
+                }
+              }
+
+              // Adjust postmark/stamp position and scale
+              const postmark = clonedLetter.querySelector('.postmark-section') as HTMLElement;
+              if (postmark) {
+                postmark.style.top = '36px';
+                postmark.style.right = '36px';
+                postmark.style.transform = 'scale(1.4)';
+                postmark.style.transformOrigin = 'top right';
+              }
+
+              // Adjust signature layout
+              const signatureSec = clonedLetter.querySelector('.signature-section') as HTMLElement;
+              if (signatureSec) {
+                signatureSec.style.marginTop = '48px';
+                signatureSec.style.paddingTop = '32px';
+                
+                const label = signatureSec.querySelector('.signature-label') as HTMLElement;
+                if (label) {
+                  label.style.fontSize = '13px';
+                  label.style.marginBottom = '8px';
+                }
+                
+                const names = signatureSec.querySelector('.signature-names') as HTMLElement;
+                if (names) {
+                  names.style.fontSize = '44px';
+                  names.style.gap = '20px';
+                }
+              }
+            }
+          }
+        });
+
+        // Create PDF
+        const imgWidth = 8.5; // US Letter width in inches
+        const pageHeight = 11; // US Letter height in inches
+        const imgHeight = (canvas.height / canvas.width) * imgWidth;
+        
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'in',
+          format: 'letter'
+        });
+
+        let position = 0;
+        
+        // Page 1
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        
+        // Subsequent pages (sliced dynamically)
+        let remainingHeight = imgHeight - pageHeight;
+        let pageNum = 1;
+        while (remainingHeight > 0) {
+          pdf.addPage();
+          position = -(pageNum * pageHeight);
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+          remainingHeight -= pageHeight;
+          pageNum++;
+        }
+
+        const fileName = 'nuestra_carta_de_boda.pdf';
+        const pdfBlob = pdf.output('blob');
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+        setPdfData({ file, pdf, blob: pdfBlob });
+      } catch (err) {
+        console.error('Error pre-generating nostalgic letter PDF in background:', err);
+      } finally {
+        setGenerating(false);
+      }
+    }, 1500);
+
+    // Clean up event, timers, and exit fullscreen on unmount
     return () => {
       clearTimeout(timer);
+      clearTimeout(generateTimer);
       window.dispatchEvent(new CustomEvent('letter_state_change', { detail: { isOpen: false } }));
       
       try {
@@ -65,220 +198,57 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
         console.warn('Failed to exit fullscreen mode:', err);
       }
     };
-  }, []);
+  }, [message]);
 
   const handleDownload = async () => {
-    if (!letterRef.current || downloading) return;
+    if (!pdfData || downloading) return;
     
     setDownloading(true);
-    const actionButtons = letterRef.current.querySelector('.action-buttons') as HTMLElement;
-    
-    const originalStyles: { el: HTMLStyleElement; text: string }[] = [];
-    const linksToRestore: { linkTag: HTMLLinkElement; styleTag: HTMLStyleElement }[] = [];
-    
-    try {
-      if (actionButtons) actionButtons.style.opacity = '0';
 
-      // 1. Sanitize all <style> tags in the main document before html2canvas initializes
-      document.querySelectorAll('style').forEach((styleTag) => {
-        try {
-          originalStyles.push({ el: styleTag, text: styleTag.innerHTML });
-          let cssText = styleTag.innerHTML;
-          if (cssText.includes('oklch') || cssText.includes('oklab')) {
-            cssText = cssText.replace(/oklch\([^\)]*\)/gi, '#566247');
-            cssText = cssText.replace(/oklab\([^\)]*\)/gi, '#566247');
-            styleTag.innerHTML = cssText;
-          }
-        } catch (e) {
-          console.warn('Error sanitizing inline style tag:', e);
+    if (navigator.canShare && navigator.canShare({ files: [pdfData.file] })) {
+      try {
+        await navigator.share({
+          files: [pdfData.file],
+          title: 'Nuestra Carta de Boda',
+          text: 'Aquí tienes nuestra carta de boda personalizada.',
+        });
+      } catch (shareErr: any) {
+        // User aborted share sheet, or WebView blocked it
+        if (shareErr.name !== 'AbortError') {
+          console.error('Error sharing file via Web Share API:', shareErr);
+          fallbackSave(pdfData);
         }
-      });
-
-      // 2. Sanitize all <link rel="stylesheet"> tags in the main document
-      document.querySelectorAll('link[rel="stylesheet"]').forEach((linkTag) => {
-        const linkElem = linkTag as HTMLLinkElement;
-        const href = linkElem.href;
-        if (href && href.includes(window.location.origin)) {
-          try {
-            const xhr = new XMLHttpRequest();
-            xhr.open('GET', href, false); // Synchronous request
-            xhr.send(null);
-            if (xhr.status === 200) {
-              let cssText = xhr.responseText;
-              cssText = cssText.replace(/oklch\([^\)]*\)/gi, '#566247');
-              cssText = cssText.replace(/oklab\([^\)]*\)/gi, '#566247');
-              
-              const styleTag = document.createElement('style');
-              styleTag.innerHTML = cssText;
-              styleTag.setAttribute('data-sanitized-link', 'true');
-              document.head.appendChild(styleTag);
-              
-              linkElem.disabled = true;
-              linksToRestore.push({ linkTag: linkElem, styleTag });
-            }
-          } catch (e) {
-            console.warn('Failed to fetch/sanitize stylesheet:', href, e);
-          }
-        }
-      });
-
-      // 3. Render the card to canvas using html2canvas
-      const canvas = await html2canvas(letterRef.current, {
-        useCORS: true,
-        scale: 2, // 2x resolution is perfect for PDF performance
-        backgroundColor: '#f5efe6',
-        logging: false,
-        onclone: (_, clonedLetter) => {
-          // Hide action buttons in cloned doc
-          const clonedButtons = clonedLetter.querySelector('.action-buttons') as HTMLElement;
-          if (clonedButtons) clonedButtons.style.display = 'none';
-
-          // Force US Letter aspect ratio and scaling on the cloned letter container
-          if (clonedLetter) {
-            // US Letter width: 8.5in * 96px = 816px. Height is dynamic (auto) to support long letters.
-            clonedLetter.style.width = '816px';
-            clonedLetter.style.height = 'auto'; // Dynamic height
-            clonedLetter.style.maxWidth = 'none';
-            clonedLetter.style.transform = 'none';
-            clonedLetter.style.rotate = 'none';
-            clonedLetter.style.margin = '0';
-            clonedLetter.style.padding = '72px 56px 56px 56px';
-            clonedLetter.style.clipPath = 'none'; // Borderless print looks much better
-            clonedLetter.style.borderRadius = '0';
-            
-            // Adjust body text font size dynamically based on message length for high readability and fit
-            const textContainer = clonedLetter.querySelector('.letter-body-text') as HTMLElement;
-            if (textContainer) {
-              let fontSize = '38px';
-              let lineHeight = '1.6';
-              const len = message.length;
-              
-              if (len > 3500) {
-                fontSize = '18px';
-                lineHeight = '1.45';
-              } else if (len > 2000) {
-                fontSize = '22px';
-                lineHeight = '1.5';
-              } else if (len > 1000) {
-                fontSize = '26px';
-                lineHeight = '1.5';
-              } else if (len > 600) {
-                fontSize = '32px';
-                lineHeight = '1.55';
-              }
-              
-              textContainer.style.fontSize = fontSize;
-              textContainer.style.lineHeight = lineHeight;
-              
-              if (len > 1000) {
-                textContainer.style.padding = '100px 30px 40px 30px';
-              } else {
-                textContainer.style.padding = '80px 20px 40px 20px';
-              }
-            }
-
-            // Adjust postmark/stamp position and scale
-            const postmark = clonedLetter.querySelector('.postmark-section') as HTMLElement;
-            if (postmark) {
-              postmark.style.top = '36px';
-              postmark.style.right = '36px';
-              postmark.style.transform = 'scale(1.4)';
-              postmark.style.transformOrigin = 'top right';
-            }
-
-            // Adjust signature layout
-            const signatureSec = clonedLetter.querySelector('.signature-section') as HTMLElement;
-            if (signatureSec) {
-              signatureSec.style.marginTop = '48px';
-              signatureSec.style.paddingTop = '32px';
-              
-              const label = signatureSec.querySelector('.signature-label') as HTMLElement;
-              if (label) {
-                label.style.fontSize = '13px';
-                label.style.marginBottom = '8px';
-              }
-              
-              const names = signatureSec.querySelector('.signature-names') as HTMLElement;
-              if (names) {
-                names.style.fontSize = '44px';
-                names.style.gap = '20px';
-              }
-            }
-          }
-        }
-      });
-
-      // Create PDF
-      const imgWidth = 8.5; // US Letter width in inches
-      const pageHeight = 11; // US Letter height in inches
-      const imgHeight = (canvas.height / canvas.width) * imgWidth;
-      
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'in',
-        format: 'letter'
-      });
-
-      let position = 0;
-      
-      // Page 1
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      
-      // Subsequent pages (sliced dynamically)
-      let remainingHeight = imgHeight - pageHeight;
-      let pageNum = 1;
-      while (remainingHeight > 0) {
-        pdf.addPage();
-        position = -(pageNum * pageHeight);
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        remainingHeight -= pageHeight;
-        pageNum++;
+      } finally {
+        setDownloading(false);
       }
-      
-      const fileName = 'nuestra_carta_de_boda.pdf';
-      const pdfBlob = pdf.output('blob');
-      const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: 'Nuestra Carta de Boda',
-            text: 'Aquí tienes nuestra carta de boda personalizada.',
-          });
-        } catch (shareErr: any) {
-          if (shareErr.name !== 'AbortError') {
-            console.error('Error sharing file via Web Share API:', shareErr);
-            pdf.save(fileName);
-          }
-        }
-      } else {
-        pdf.save(fileName);
-      }
-    } catch (err) {
-      console.error('Error exporting nostalgic letter to PDF:', err);
-    } finally {
-      // Restore original stylesheets in the main document
-      originalStyles.forEach(({ el, text }) => {
-        try {
-          el.innerHTML = text;
-        } catch (e) {
-          console.warn('Error restoring style tag:', e);
-        }
-      });
-      
-      linksToRestore.forEach(({ linkTag, styleTag }) => {
-        try {
-          linkTag.disabled = false;
-          styleTag.remove();
-        } catch (e) {
-          console.warn('Error restoring link tag:', e);
-        }
-      });
-
-      if (actionButtons) actionButtons.style.opacity = '1';
+    } else {
+      fallbackSave(pdfData);
       setDownloading(false);
+    }
+  };
+
+  const fallbackSave = (data: { file: File; pdf: jsPDF; blob: Blob }) => {
+    const fileName = 'nuestra_carta_de_boda.pdf';
+    // Check for iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if (isIOS) {
+      try {
+        // Open PDF in a new tab so user can use iOS native Safari PDF viewer & share options
+        const fileURL = URL.createObjectURL(data.blob);
+        const newWindow = window.open(fileURL, '_blank');
+        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+          // Fallback if blocked by Safari popup blocker
+          data.pdf.save(fileName);
+        }
+      } catch (err) {
+        console.error('Failed to open PDF in new tab, falling back to direct save:', err);
+        data.pdf.save(fileName);
+      }
+    } else {
+      // Standard save on Android/Desktop
+      data.pdf.save(fileName);
     }
   };
 
@@ -417,11 +387,15 @@ export default function NostalgicLetter({ message, onClose }: NostalgicLetterPro
           {/* Save Button */}
           <button
             onClick={handleDownload}
-            disabled={downloading}
+            disabled={generating || downloading}
             className="flex items-center justify-center gap-2 bg-[#8f7959] hover:bg-[#726046] text-white px-5 py-2.5 rounded font-semibold text-xs transition-colors shadow-md disabled:opacity-50 cursor-pointer w-full"
           >
             <Download size={14} />
-            {downloading ? 'Generando PDF...' : 'Guardar Carta'}
+            {generating 
+              ? 'Preparando carta...' 
+              : downloading 
+                ? 'Guardando...' 
+                : 'Guardar Carta'}
           </button>
  
           {/* Centered Close Icon / Link at the end */}
