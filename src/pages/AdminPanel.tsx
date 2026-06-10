@@ -1133,11 +1133,17 @@ export default function AdminPanel() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#D1C4B0]/20 text-[#44483f]">
-                      {filteredInvitations.map((i) => {
-                        const guestLink = `${window.location.origin}/${i.code}`;
+                      {(() => {
+                        const respondedIds = new Set(rsvps.map(r => r.invitation_id).filter(Boolean));
+                        return filteredInvitations.map((i) => {
+                          const guestLink = `${window.location.origin}/${i.code}`;
+                          const hasRSVP = respondedIds.has(i.id);
 
-                        return (
-                          <tr key={i.id} className="hover:bg-[#FDFDFD] transition-colors">
+                          return (
+                            <tr 
+                              key={i.id} 
+                              className={`transition-colors ${!hasRSVP ? 'bg-[#e7f2da]/40 hover:bg-[#e7f2da]/60' : 'hover:bg-[#FDFDFD]'}`}
+                            >
                             <td className="p-4 font-semibold text-[#2C3525]">
                               {i.group_name}
                             </td>
@@ -1238,7 +1244,8 @@ export default function AdminPanel() {
                             </td>
                           </tr>
                         );
-                      })}
+                      });
+                    })()}
                     </tbody>
                   </table>
                 </div>
