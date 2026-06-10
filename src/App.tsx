@@ -10,6 +10,7 @@ import RSVP from './pages/RSVP';
 import Info from './pages/Info';
 import AdminPanel from './pages/AdminPanel';
 import SharePhotos from './pages/SharePhotos';
+import ParticipationInvitation from './pages/ParticipationInvitation';
 import DesktopBlocker from './components/DesktopBlocker';
 import { useIsDesktop } from './hooks/useIsDesktop';
 import ScrollToTop from './components/ScrollToTop';
@@ -27,14 +28,24 @@ export default function App() {
   useEffect(() => {
     if (isAdminRoute) return;
 
-    const params = new URLSearchParams(window.location.search);
-    let code = params.get('code');
+    const isParticipationRoute = window.location.pathname.startsWith('/participacion/');
+    let code = '';
 
-    if (!code) {
-      const path = window.location.pathname.replace(/^\/|\/$/g, '');
-      const reservedRoutes = ['ubicacion', 'rsvp', 'info', 'admin-panel', 'compartir-fotos'];
-      if (path && !reservedRoutes.includes(path) && !path.includes('/')) {
-        code = path;
+    if (isParticipationRoute) {
+      const parts = window.location.pathname.split('/');
+      code = parts[parts.length - 1] || '';
+      localStorage.setItem('is_participation_invite', 'true');
+    } else {
+      localStorage.setItem('is_participation_invite', 'false');
+      const params = new URLSearchParams(window.location.search);
+      code = params.get('code') || '';
+
+      if (!code) {
+        const path = window.location.pathname.replace(/^\/|\/$/g, '');
+        const reservedRoutes = ['ubicacion', 'rsvp', 'info', 'admin-panel', 'compartir-fotos', 'participacion'];
+        if (path && !reservedRoutes.includes(path) && !path.includes('/')) {
+          code = path;
+        }
       }
     }
 
@@ -44,8 +55,9 @@ export default function App() {
       
       const fetchDetails = async () => {
         try {
+          const tableName = isParticipationRoute ? 'participations' : 'invitations';
           const { data, error } = await supabase
-            .from('invitations')
+            .from(tableName)
             .select('group_name, custom_message')
             .eq('code', upperCode)
             .single();
@@ -60,7 +72,7 @@ export default function App() {
             }
           }
         } catch (err) {
-          console.error('Error pre-fetching invitation details:', err);
+          console.error('Error pre-fetching details:', err);
           localStorage.setItem('invitation_group_name', 'Familia y Amigos');
           localStorage.removeItem('invitation_custom_message');
         } finally {
@@ -102,6 +114,10 @@ export default function App() {
         <Route path="/admin-panel" element={<AdminPanel />} />
         <Route path="/compartir-fotos" element={<SharePhotos />} />
         
+        {isEnvelopeOpen && (
+          <Route path="/participacion/:code" element={<ParticipationInvitation />} />
+        )}
+
         {/* When envelope is open, render app layout and routes */}
         {isEnvelopeOpen && (
           <Route path="/" element={<MainLayout />}>
